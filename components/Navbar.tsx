@@ -72,8 +72,8 @@ export function Navbar() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-16 shrink-0 px-4 pt-3 sm:px-6">
-      <div className="relative mx-auto flex h-full w-full max-w-6xl items-center justify-between gap-4 rounded-[2rem] border border-white/8 bg-zinc-950/90 px-4 py-3 backdrop-blur sm:px-5">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-white/10 bg-zinc-950/90 backdrop-blur">
+      <div className="relative mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="min-w-0 flex-1">
           <Link href="/" className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent text-lg font-semibold text-ink">
@@ -104,7 +104,7 @@ export function Navbar() {
           aria-label="Primary"
           className={`${
             isOpen ? "flex" : "hidden"
-          } absolute left-0 right-0 top-full z-30 mt-2 flex-col gap-2 rounded-[1.5rem] border border-white/8 bg-zinc-950/95 p-3 shadow-2xl sm:static sm:z-auto sm:mt-0 sm:flex sm:w-auto sm:flex-row sm:items-center sm:gap-1 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none`}
+          } absolute left-4 right-4 top-full z-30 mt-2 flex-col gap-2 rounded-b-xl border border-white/8 border-t-0 bg-zinc-950/95 p-3 shadow-2xl sm:static sm:left-auto sm:right-auto sm:z-auto sm:mt-0 sm:flex sm:w-auto sm:flex-row sm:items-center sm:gap-1 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none`}
         >
           {navItems.map((item) =>
             item.kind === "link" ? (
