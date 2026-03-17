@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { formatDate, renderStars } from "@/lib/utils";
+import { formatDate, getInitials, renderStars } from "@/lib/utils";
 
 type RatingCardProps = {
   personId: string;
   personName: string;
+  authorName: string;
+  authorAvatarUrl: string | null;
   stars: number;
   text: string;
   createdAt: string;
@@ -15,12 +17,16 @@ type RatingCardProps = {
 export function RatingCard({
   personId,
   personName,
+  authorName,
+  authorAvatarUrl,
   stars,
   text,
   createdAt,
   showPersonLink = true,
   actions
 }: RatingCardProps) {
+  const initials = getInitials(authorName);
+
   return (
     <article className="rounded-[1.75rem] border border-line bg-panel/80 p-5 shadow-glow">
       <div className="flex items-start justify-between gap-4">
@@ -40,6 +46,20 @@ export function RatingCard({
         <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
           {formatDate(createdAt)}
         </p>
+      </div>
+      <div className="mt-4 flex items-center gap-3">
+        {authorAvatarUrl ? (
+          <img
+            src={authorAvatarUrl}
+            alt={`${authorName} avatar`}
+            className="h-8 w-8 rounded-full border border-line object-cover"
+          />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-black/20 text-xs font-semibold text-accent">
+            {initials}
+          </div>
+        )}
+        <p className="text-sm font-medium text-zinc-200">{authorName}</p>
       </div>
       <p className="mt-4 text-zinc-300">{text}</p>
       {actions ? <div className="mt-4">{actions}</div> : null}

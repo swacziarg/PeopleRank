@@ -83,6 +83,8 @@ export function ManageRatingCard({
     <RatingCard
       personId={currentRating.personId}
       personName={currentRating.personName}
+      authorName={currentRating.authorName}
+      authorAvatarUrl={currentRating.authorAvatarUrl}
       stars={currentRating.stars}
       text={currentRating.text}
       createdAt={currentRating.createdAt}

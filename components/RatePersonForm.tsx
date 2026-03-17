@@ -94,6 +94,18 @@ export function RatePersonForm({
       userId: data.user_id,
       personId,
       personName,
+      authorName:
+        user.user_metadata?.display_name ||
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email ||
+        "Unknown user",
+      authorAvatarUrl:
+        typeof user.user_metadata?.avatar_url === "string"
+          ? user.user_metadata.avatar_url
+          : typeof user.user_metadata?.picture === "string"
+            ? user.user_metadata.picture
+            : null,
       stars: data.stars,
       text: data.text,
       createdAt: data.created_at

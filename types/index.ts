@@ -23,6 +23,8 @@ export type FeedRating = {
   personId: string;
   personName: string;
   userId: string;
+  authorName: string;
+  authorAvatarUrl: string | null;
   stars: number;
   text: string;
   createdAt: string;

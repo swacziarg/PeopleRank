@@ -6,7 +6,9 @@ export async function getLatestRatings(limit = 20): Promise<FeedRating[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("ratings")
-    .select("id, user_id, stars, text, created_at, people!inner(id, name)")
+    .select(
+      "id, user_id, stars, text, created_at, people!inner(id, name), profiles!ratings_user_id_fkey(display_name, avatar_url, username)"
+    )
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -17,6 +19,11 @@ export async function getLatestRatings(limit = 20): Promise<FeedRating[]> {
   return data.map((item) => ({
     id: item.id,
     userId: item.user_id,
+    authorName:
+      item.profiles?.display_name?.trim() ||
+      item.profiles?.username?.trim() ||
+      "Unknown user",
+    authorAvatarUrl: item.profiles?.avatar_url ?? null,
     stars: item.stars,
     text: item.text,
     createdAt: item.created_at,
@@ -31,7 +38,9 @@ export async function getRatingsForPerson(
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("ratings")
-    .select("id, user_id, stars, text, created_at")
+    .select(
+      "id, user_id, stars, text, created_at, profiles!ratings_user_id_fkey(display_name, avatar_url, username)"
+    )
     .eq("person_id", personId)
     .order("created_at", { ascending: false });
 
@@ -42,6 +51,11 @@ export async function getRatingsForPerson(
   return data.map((item) => ({
     id: item.id,
     userId: item.user_id,
+    authorName:
+      item.profiles?.display_name?.trim() ||
+      item.profiles?.username?.trim() ||
+      "Unknown user",
+    authorAvatarUrl: item.profiles?.avatar_url ?? null,
     stars: item.stars,
     text: item.text,
     createdAt: item.created_at,

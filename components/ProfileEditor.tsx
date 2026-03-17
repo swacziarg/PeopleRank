@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getInitials } from "@/lib/utils";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 type ProfileEditorProps = {
@@ -33,10 +33,11 @@ export function ProfileEditor({
   const [success, setSuccess] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeletingProfile, setIsDeletingProfile] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const resolvedName = displayName.trim() || initialUsername || email || "User";
-  const initials = useMemo(() => resolvedName.slice(0, 1).toUpperCase(), [resolvedName]);
+  const initials = useMemo(() => getInitials(resolvedName), [resolvedName]);
   const normalizedAvatarUrl = avatarUrl.trim();
 
   useEffect(() => {
@@ -105,53 +106,98 @@ export function ProfileEditor({
     router.refresh();
   };
 
+  const handleDeleteProfile = async () => {
+    if (
+      isDeletingProfile ||
+      !window.confirm(
+        "Delete your profile? This removes your profile row and signs you out."
+      )
+    ) {
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      setError("Supabase environment variables are missing.");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setIsDeletingProfile(true);
+
+    const supabase = getSupabaseBrowserClient();
+    const { error: deleteError } = await supabase.from("profiles").delete().eq("id", userId);
+
+    if (deleteError) {
+      setError(deleteError.message);
+      setIsDeletingProfile(false);
+      return;
+    }
+
+    await supabase.auth.signOut();
+    window.alert("Profile deleted. Contact support to fully remove account.");
+    router.replace("/login");
+    router.refresh();
+  };
+
   return (
-    <div
-      ref={menuRef}
-      className="relative"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          setIsMenuOpen(false);
-          if (isEditing) {
-            handleCancel();
+    <div className="w-full">
+      <div
+        ref={menuRef}
+        className="relative"
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            setIsMenuOpen(false);
+            if (isEditing) {
+              handleCancel();
+            }
           }
-        }
-      }}
-    >
+        }}
+      >
+        <button
+          type="button"
+          aria-label="Open profile options"
+          aria-haspopup="menu"
+          aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen((open) => !open)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl leading-none text-white transition-colors hover:bg-white/10"
+        >
+          <span aria-hidden="true">⋯</span>
+        </button>
+
+        {isMenuOpen ? (
+          <div
+            role="menu"
+            className="absolute right-0 top-full z-20 mt-2 min-w-40 rounded-2xl border border-white/8 bg-zinc-950/95 p-2 shadow-2xl"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              onClick={openEditor}
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
+            >
+              Edit profile
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleCancel}
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-300 transition-colors hover:bg-white/5"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : null}
+      </div>
+
       <button
         type="button"
-        aria-label="Open profile options"
-        aria-haspopup="menu"
-        aria-expanded={isMenuOpen}
-        onClick={() => setIsMenuOpen((open) => !open)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl leading-none text-white transition-colors hover:bg-white/10"
+        onClick={handleDeleteProfile}
+        disabled={isDeletingProfile}
+        className="mt-3 rounded-full border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-200 transition-colors hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <span aria-hidden="true">⋯</span>
+        {isDeletingProfile ? "Deleting profile..." : "Delete profile"}
       </button>
-
-      {isMenuOpen ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-20 mt-2 min-w-40 rounded-2xl border border-white/8 bg-zinc-950/95 p-2 shadow-2xl"
-        >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={openEditor}
-            className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
-          >
-            Edit profile
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleCancel}
-            className="w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-300 transition-colors hover:bg-white/5"
-          >
-            Cancel
-          </button>
-        </div>
-      ) : null}
 
       {isEditing ? (
         <div className="mt-4 w-full rounded-[1.75rem] border border-line bg-panel/80 p-6 shadow-glow sm:min-w-[32rem]">

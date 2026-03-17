@@ -1,6 +1,6 @@
 import { SignOutButton } from "@/components/SignOutButton";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getInitials } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { ManageRatingCard } from "@/components/ManageRatingCard";
 import { ProfileEditor } from "@/components/ProfileEditor";
@@ -42,7 +42,9 @@ export default async function ProfilePage() {
         .maybeSingle(),
       supabase
         .from("ratings")
-        .select("id, user_id, stars, text, created_at, people!inner(id, name)")
+        .select(
+          "id, user_id, stars, text, created_at, people!inner(id, name), profiles!ratings_user_id_fkey(display_name, avatar_url, username)"
+        )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
     ]);
@@ -61,7 +63,7 @@ export default async function ProfilePage() {
     user.user_metadata?.username ||
     user.email ||
     "No name set";
-  const initials = displayName.slice(0, 1).toUpperCase();
+  const initials = getInitials(displayName);
 
   return (
     <section className="space-y-6 py-10">
@@ -95,7 +97,7 @@ export default async function ProfilePage() {
               <p className="text-sm text-zinc-400">{user.email}</p>
             </div>
           </div>
-          <div className="flex items-start gap-3">
+          <div className="flex flex-col items-start gap-3">
             <ProfileEditor
               userId={user.id}
               email={user.email || ""}
@@ -167,6 +169,12 @@ export default async function ProfilePage() {
               userId: rating.user_id,
               personId: rating.people.id,
               personName: rating.people.name,
+              authorName:
+                rating.profiles?.display_name?.trim() ||
+                user.email ||
+                rating.profiles?.username?.trim() ||
+                "Unknown user",
+              authorAvatarUrl: rating.profiles?.avatar_url ?? null,
               stars: rating.stars,
               text: rating.text,
               createdAt: rating.created_at

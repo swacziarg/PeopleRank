@@ -67,6 +67,8 @@ export default async function HomePage() {
                 key={rating.id}
                 personId={rating.personId}
                 personName={rating.personName}
+                authorName={rating.authorName}
+                authorAvatarUrl={rating.authorAvatarUrl}
                 stars={rating.stars}
                 text={rating.text}
                 createdAt={rating.createdAt}
