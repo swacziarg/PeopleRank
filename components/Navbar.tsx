@@ -72,7 +72,7 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-20 mb-8 shrink-0">
+    <header className="mb-8 shrink-0">
       <div className="relative flex items-center justify-between gap-4 rounded-[2rem] border border-white/8 bg-zinc-950/80 px-4 py-3 backdrop-blur-sm sm:px-5">
         <div className="min-w-0 flex-1">
           <Link href="/" className="flex items-center gap-3">

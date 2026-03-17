@@ -95,7 +95,18 @@ export default async function ProfilePage() {
               <p className="text-sm text-zinc-400">{user.email}</p>
             </div>
           </div>
-          <SignOutButton />
+          <div className="flex items-start gap-3">
+            <ProfileEditor
+              userId={user.id}
+              email={user.email || ""}
+              createdAt={profile?.created_at || user.created_at}
+              initialDisplayName={profile?.display_name || ""}
+              initialBio={profile?.bio || ""}
+              initialAvatarUrl={profile?.avatar_url || ""}
+              initialUsername={profile?.username || ""}
+            />
+            <SignOutButton />
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -127,16 +138,6 @@ export default async function ProfilePage() {
           <p className="mt-4 text-sm text-rose-300">{profileError.message}</p>
         ) : null}
       </div>
-
-      <ProfileEditor
-        userId={user.id}
-        email={user.email || ""}
-        createdAt={profile?.created_at || user.created_at}
-        initialDisplayName={profile?.display_name || ""}
-        initialBio={profile?.bio || ""}
-        initialAvatarUrl={profile?.avatar_url || ""}
-        initialUsername={profile?.username || ""}
-      />
 
       <div className="space-y-4">
         <div>
