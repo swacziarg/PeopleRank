@@ -3,28 +3,79 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
+import { SignOutButton } from "@/components/SignOutButton";
 
-const links = [
+const baseLinks = [
   { href: "/", label: "Home" },
   { href: "/search", label: "Search" },
   { href: "/add", label: "Add" },
-  { href: "/profile", label: "Profile" },
-  { href: "/login", label: "Login" },
   { href: "/about", label: "About" }
-];
+] as const;
 
 export function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [authState, setAuthState] = useState<"loading" | "authenticated" | "guest">(
+    "loading"
+  );
 
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setAuthState("guest");
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+    let isMounted = true;
+
+    const loadUser = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (isMounted) {
+        setAuthState(user ? "authenticated" : "guest");
+      }
+    };
+
+    void loadUser();
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isMounted) {
+        setAuthState(session?.user ? "authenticated" : "guest");
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const navItems = [
+    ...baseLinks.map((link) => ({ ...link, kind: "link" as const })),
+    ...(authState === "authenticated"
+      ? [{ href: "/profile", label: "Profile", kind: "link" as const }]
+      : []),
+    ...(authState === "guest"
+      ? [{ href: "/login", label: "Login", kind: "link" as const }]
+      : []),
+    ...(authState === "authenticated"
+      ? [{ label: "Sign out", kind: "signout" as const }]
+      : [])
+  ];
+
   return (
     <header className="sticky top-0 z-20 mb-8">
-      <div className="rounded-[2rem] border border-white/10 bg-zinc-950/85 px-4 py-3 backdrop-blur">
-        <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[2rem] border border-white/10 bg-zinc-950/85 px-4 py-3 backdrop-blur">
+        <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent text-lg font-semibold text-ink">
               PR
@@ -52,22 +103,28 @@ export function Navbar() {
         <nav
           id="site-navigation"
           aria-label="Primary"
-          className={`${isOpen ? "mt-4 flex" : "hidden"} flex-col gap-2 sm:mt-4 sm:flex sm:flex-row sm:items-center sm:justify-end sm:gap-1`}
+          className={`${
+            isOpen ? "flex" : "hidden"
+          } w-full flex-col gap-2 sm:flex sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-1`}
         >
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              aria-current={pathname === link.href ? "page" : undefined}
-              className={`rounded-full px-4 py-2 text-sm ${
-                pathname === link.href
-                  ? "bg-accent text-ink"
-                  : "text-zinc-100 hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navItems.map((item) =>
+            item.kind === "link" ? (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={pathname === item.href ? "page" : undefined}
+                className={`rounded-full px-4 py-2 text-sm ${
+                  pathname === item.href
+                    ? "bg-accent text-ink"
+                    : "text-zinc-100 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <SignOutButton key={item.label} />
+            )
+          )}
         </nav>
       </div>
     </header>
