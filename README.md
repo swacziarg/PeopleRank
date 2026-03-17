@@ -1,90 +1,80 @@
 # PeopleRank
 
-PeopleRank is a satirical public rating app built with Next.js 14, Tailwind CSS, and Supabase. Users can add people, leave short star-based ratings, browse the latest jokes, and search the growing hall of questionable public opinion.
+PeopleRank is a satirical public rating app built with Next.js 14, Tailwind CSS, and Supabase. Users can browse public ratings, search people, add new entries, and leave short 1 to 5 star reviews. Authenticated access is required for posting and for the profile area.
 
-## Stack
+## Live App
 
-- Next.js 14 App Router + TypeScript
+https://people-rank.vercel.app
+
+## Tech Stack
+
+- Next.js 14 App Router
+- TypeScript
 - Tailwind CSS
-- Supabase PostgreSQL + Auth + API
-- Render deployment
+- Supabase
+  - PostgreSQL
+  - Auth
+  - Row Level Security
+- Vercel
 
-## Folder Tree
+## Features
 
-```text
-.
-├── .env.example
-├── .gitignore
-├── README.md
-├── app
-│   ├── about
-│   │   └── page.tsx
-│   ├── add
-│   │   └── page.tsx
-│   ├── globals.css
-│   ├── layout.tsx
-│   ├── page.tsx
-│   ├── person
-│   │   └── [id]
-│   │       └── page.tsx
-│   ├── profile
-│   │   └── page.tsx
-│   ├── rate
-│   │   └── [id]
-│   │       └── page.tsx
-│   └── search
-│       └── page.tsx
-├── components
-│   ├── AddPersonForm.tsx
-│   ├── Navbar.tsx
-│   ├── ProfilePanel.tsx
-│   ├── RatePersonForm.tsx
-│   ├── RatingCard.tsx
-│   ├── SearchPeople.tsx
-│   ├── SignInForm.tsx
-│   └── StarRatingInput.tsx
-├── lib
-│   ├── queries.ts
-│   ├── supabaseClient.ts
-│   ├── supabaseServer.ts
-│   └── utils.ts
-├── next-env.d.ts
-├── next.config.js
-├── package.json
-├── postcss.config.js
-├── tailwind.config.ts
-├── tsconfig.json
-└── types
-    ├── database.ts
-    └── index.ts
-```
+- Public home feed of recent ratings
+- Search by person name
+- Person detail page with average score and rating history
+- Protected add person flow
+- Protected rate person flow
+- Real login page with email/password sign in and sign up
+- Profile page with auth data, stored profile data, and the user’s own ratings
 
-## Local Setup
+## Pages
 
-1. Create a Supabase project.
-2. Copy `.env.example` to `.env.local`.
-3. Add:
+- `/`: latest public ratings feed
+- `/search`: search people by name
+- `/person/[id]`: person details and ratings
+- `/rate/[id]`: protected rating form
+- `/add`: protected form for creating a person
+- `/login`: email/password login and sign up
+- `/profile`: protected user account page
+- `/about`: static app description
+
+## Authentication Flow
+
+- Supabase Auth handles email/password authentication.
+- Middleware protects `/add`, `/rate/*`, and `/profile`.
+- Unauthenticated users are redirected to `/login?next=...`.
+- Authenticated users visiting `/login` are redirected to `/profile`.
+- After successful login, users are redirected to the requested protected page or to `/profile`.
+- Sign up uses Supabase Auth directly. If email confirmation is enabled in Supabase, users must confirm their email before logging in.
+
+## Environment Variables
+
+Create `.env.local`:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-publishable-key
 ```
 
-4. Install dependencies:
+## Local Development
+
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-5. Start the app:
+2. Run the app:
 
 ```bash
 npm run dev
 ```
 
-## Supabase Schema SQL
+3. Open `http://localhost:3000`
 
-Run this in the Supabase SQL editor:
+## Supabase Setup
+
+Run this SQL in the Supabase SQL editor:
 
 ```sql
 create extension if not exists "pgcrypto";
@@ -113,19 +103,17 @@ create table if not exists public.ratings (
   created_at timestamptz not null default timezone('utc', now())
 );
 
-create index if not exists people_name_idx 
+create index if not exists people_name_idx
 on public.people using gin (name gin_trgm_ops);
 
-create index if not exists ratings_person_id_idx 
+create index if not exists ratings_person_id_idx
 on public.ratings (person_id);
 
-create index if not exists ratings_user_id_idx 
+create index if not exists ratings_user_id_idx
 on public.ratings (user_id);
 ```
 
-## Row Level Security
-
-Enable RLS and add policies:
+Enable Row Level Security:
 
 ```sql
 alter table public.profiles enable row level security;
@@ -179,67 +167,16 @@ using (auth.uid() = id)
 with check (auth.uid() = id);
 ```
 
-## Example Queries
+## Deployment
 
-Fetch ratings by `person_id`:
+The app is deployed on Vercel:
 
-```ts
-const { data, error } = await supabase
-  .from("ratings")
-  .select("id, stars, text, created_at")
-  .eq("person_id", personId)
-  .order("created_at", { ascending: false });
-```
+https://people-rank.vercel.app
 
-Insert a rating:
-
-```ts
-const { error } = await supabase.from("ratings").insert({
-  user_id: user.id,
-  person_id: personId,
-  stars: 5,
-  text: "Would trust them to choose the playlist."
-});
-```
-
-Search people with `ILIKE`:
-
-```ts
-const { data, error } = await supabase
-  .from("people")
-  .select("id, name, created_at")
-  .ilike("name", `%${query}%`)
-  .order("name");
-```
-
-## Auth Notes
-
-- The app uses Supabase client auth directly.
-- The minimal auth flow is email OTP magic link from the profile, add, and rate screens.
-- Enable Email auth in Supabase Authentication settings.
-- Set your site URL in Supabase to your local or production domain so OTP redirects return correctly.
-
-## Render Deployment
+To deploy your own copy:
 
 1. Create a Supabase project.
-2. Run the schema SQL and RLS SQL above.
-3. Copy `.env.example` to your local `.env.local`.
-4. Push this repo to GitHub.
-5. In Render, create a new Web Service from the GitHub repo.
-6. Use:
-   - Build command: `npm install && npm run build`
-   - Start command: `npm run start`
-7. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` in Render environment variables.
-8. Deploy.
-
-## MVP Scope
-
-- Public read access for people and ratings
-- Authenticated inserts for people and ratings
-- Home feed
-- Search
-- Person detail page
-- Add person flow
-- Rate person flow
-- Profile page for current user ratings
-- Static about page
+2. Run the schema and RLS SQL above.
+3. Add the environment variables in Vercel.
+4. Import the repo into Vercel.
+5. Deploy.
