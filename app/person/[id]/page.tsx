@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { RatingCard } from "@/components/RatingCard";
+import { ManageRatingCard } from "@/components/ManageRatingCard";
 import { getPersonById, getRatingsForPerson } from "@/lib/queries";
 import { formatAverage } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
 type PersonPageProps = {
   params: {
@@ -23,6 +24,10 @@ export default async function PersonPage({ params }: PersonPageProps) {
     );
   }
 
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
   const person = await getPersonById(params.id);
 
   if (!person) {
@@ -70,13 +75,10 @@ export default async function PersonPage({ params }: PersonPageProps) {
           </div>
         ) : (
           ratings.map((rating) => (
-            <RatingCard
+            <ManageRatingCard
               key={rating.id}
-              personId={person.id}
-              personName={person.name}
-              stars={rating.stars}
-              text={rating.text}
-              createdAt={rating.createdAt}
+              rating={rating}
+              currentUserId={user?.id ?? null}
               showPersonLink={false}
             />
           ))

@@ -9,8 +9,10 @@
 body {
   @apply min-h-screen bg-ink text-zinc-100 antialiased;
   background-image:
-    radial-gradient(circle at top, rgba(244, 184, 96, 0.18), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(88, 80, 236, 0.12), transparent 26%);
+    radial-gradient(circle at top left, rgba(244, 184, 96, 0.12), transparent 28%),
+    radial-gradient(circle at 85% 15%, rgba(158, 177, 255, 0.06), transparent 22%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0));
+  background-attachment: fixed;
 }
 
 a {

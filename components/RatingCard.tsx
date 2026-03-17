@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { formatDate, renderStars } from "@/lib/utils";
 
 type RatingCardProps = {
@@ -8,6 +9,7 @@ type RatingCardProps = {
   text: string;
   createdAt: string;
   showPersonLink?: boolean;
+  actions?: ReactNode;
 };
 
 export function RatingCard({
@@ -16,7 +18,8 @@ export function RatingCard({
   stars,
   text,
   createdAt,
-  showPersonLink = true
+  showPersonLink = true,
+  actions
 }: RatingCardProps) {
   return (
     <article className="rounded-[1.75rem] border border-line bg-panel/80 p-5 shadow-glow">
@@ -39,6 +42,7 @@ export function RatingCard({
         </p>
       </div>
       <p className="mt-4 text-zinc-300">{text}</p>
+      {actions ? <div className="mt-4">{actions}</div> : null}
     </article>
   );
 }

@@ -1,0 +1,117 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { RatingCard } from "@/components/RatingCard";
+import { RatePersonForm } from "@/components/RatePersonForm";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import type { FeedRating } from "@/types";
+
+type ManageRatingCardProps = {
+  rating: FeedRating;
+  currentUserId: string | null;
+  showPersonLink?: boolean;
+};
+
+export function ManageRatingCard({
+  rating,
+  currentUserId,
+  showPersonLink = true
+}: ManageRatingCardProps) {
+  const router = useRouter();
+  const [currentRating, setCurrentRating] = useState(rating);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [error, setError] = useState("");
+  const isOwner = currentUserId === currentRating.userId;
+
+  if (isDeleted) {
+    return null;
+  }
+
+  const handleDelete = async () => {
+    if (!isOwner || isDeleting || !window.confirm("Delete this rating?")) {
+      return;
+    }
+
+    setError("");
+    setIsDeleting(true);
+
+    const supabase = getSupabaseBrowserClient();
+    const { error: deleteError } = await supabase
+      .from("ratings")
+      .delete()
+      .eq("id", currentRating.id)
+      .eq("user_id", currentRating.userId);
+
+    if (deleteError) {
+      setError(deleteError.message);
+      setIsDeleting(false);
+      return;
+    }
+
+    setIsDeleted(true);
+    router.refresh();
+  };
+
+  if (isEditing) {
+    return (
+      <div className="space-y-3">
+        <RatePersonForm
+          personId={currentRating.personId}
+          personName={currentRating.personName}
+          ratingId={currentRating.id}
+          initialStars={currentRating.stars}
+          initialText={currentRating.text}
+          onSuccess={(updatedRating) => {
+            setCurrentRating(updatedRating);
+            setIsEditing(false);
+            router.refresh();
+          }}
+          onCancel={() => {
+            setError("");
+            setIsEditing(false);
+          }}
+        />
+        {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+      </div>
+    );
+  }
+
+  return (
+    <RatingCard
+      personId={currentRating.personId}
+      personName={currentRating.personName}
+      stars={currentRating.stars}
+      text={currentRating.text}
+      createdAt={currentRating.createdAt}
+      showPersonLink={showPersonLink}
+      actions={
+        isOwner ? (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setIsEditing(true);
+              }}
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:border-zinc-500 hover:bg-white/10"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:border-zinc-500 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </button>
+            {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+          </div>
+        ) : null
+      }
+    />
+  );
+}

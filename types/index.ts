@@ -22,6 +22,7 @@ export type FeedRating = {
   id: string;
   personId: string;
   personName: string;
+  userId: string;
   stars: number;
   text: string;
   createdAt: string;

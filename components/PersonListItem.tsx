@@ -9,18 +9,18 @@ type PersonListItemProps = {
 export function PersonListItem({ person }: PersonListItemProps) {
   return (
     <li>
-      <article className="flex flex-col gap-4 rounded-[1.5rem] border border-line bg-panel/80 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <article className="flex flex-col gap-4 rounded-[1.5rem] border border-white/8 bg-panel/80 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           {person.avatarUrl ? (
             <img
               src={person.avatarUrl}
               alt={`${person.name} avatar`}
-              className="h-14 w-14 rounded-full border border-line object-cover"
+              className="h-14 w-14 rounded-full border border-white/10 object-cover"
             />
           ) : (
             <div
               aria-hidden="true"
-              className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-black/20 text-sm font-semibold text-accent"
+              className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-black/20 text-sm font-semibold text-accent"
             >
               {getInitials(person.name)}
             </div>
@@ -35,16 +35,16 @@ export function PersonListItem({ person }: PersonListItemProps) {
             </div>
 
             <div className="flex flex-wrap gap-2 text-sm text-zinc-300">
-              <span className="rounded-full border border-line bg-black/20 px-3 py-1">
+              <span className="rounded-full border border-white/8 bg-black/20 px-3 py-1">
                 {person.ratingCount} ratings
               </span>
-              <span className="rounded-full border border-line bg-black/20 px-3 py-1">
+              <span className="rounded-full border border-white/8 bg-black/20 px-3 py-1">
                 {person.commentCount} comments
               </span>
-              <span className="rounded-full border border-line bg-black/20 px-3 py-1">
+              <span className="rounded-full border border-white/8 bg-black/20 px-3 py-1">
                 Score {person.engagementScore}
               </span>
-              <span className="rounded-full border border-line bg-black/20 px-3 py-1">
+              <span className="rounded-full border border-white/8 bg-black/20 px-3 py-1">
                 Avg {formatAverage(person.averageStars)}
               </span>
             </div>
@@ -55,14 +55,14 @@ export function PersonListItem({ person }: PersonListItemProps) {
           <Link
             href={`/person/${person.id}`}
             aria-label={`View ${person.name}`}
-            className="rounded-full border border-line bg-white/5 px-4 py-2 text-sm text-white hover:border-zinc-500 hover:bg-white/10"
+            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:border-zinc-500 hover:bg-white/10"
           >
             View
           </Link>
           <Link
             href={`/rate/${person.id}`}
             aria-label={`Rate ${person.name}`}
-            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-ink hover:bg-amber-300"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-amber-300"
           >
             Rate
           </Link>

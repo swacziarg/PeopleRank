@@ -42,19 +42,25 @@ export type Database = {
         Row: {
           bio: string | null;
           created_at: string;
+          display_name: string | null;
           id: string;
+          avatar_url: string | null;
           username: string;
         };
         Insert: {
           bio?: string | null;
           created_at?: string;
+          display_name?: string | null;
           id: string;
+          avatar_url?: string | null;
           username: string;
         };
         Update: {
           bio?: string | null;
           created_at?: string;
+          display_name?: string | null;
           id?: string;
+          avatar_url?: string | null;
           username?: string;
         };
         Relationships: [];

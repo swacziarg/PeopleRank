@@ -2,7 +2,8 @@ import { SignOutButton } from "@/components/SignOutButton";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
-import { RatingCard } from "@/components/RatingCard";
+import { ManageRatingCard } from "@/components/ManageRatingCard";
+import { ProfileEditor } from "@/components/ProfileEditor";
 
 export default async function ProfilePage() {
   if (!isSupabaseConfigured) {
@@ -36,22 +37,31 @@ export default async function ProfilePage() {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("username, bio")
+        .select("username, display_name, bio, avatar_url, created_at")
         .eq("id", user.id)
         .maybeSingle(),
       supabase
         .from("ratings")
-        .select("id, stars, text, created_at, people!inner(id, name)")
+        .select("id, user_id, stars, text, created_at, people!inner(id, name)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
     ]);
 
   const avatarUrl =
-    typeof user.user_metadata?.avatar_url === "string"
-      ? user.user_metadata.avatar_url
-      : typeof user.user_metadata?.picture === "string"
+    typeof profile?.avatar_url === "string" && profile.avatar_url.trim()
+      ? profile.avatar_url
+      : typeof user.user_metadata?.avatar_url === "string"
+        ? user.user_metadata.avatar_url
+        : typeof user.user_metadata?.picture === "string"
         ? user.user_metadata.picture
         : null;
+  const displayName =
+    profile?.display_name?.trim() ||
+    profile?.username ||
+    user.user_metadata?.username ||
+    user.email ||
+    "No name set";
+  const initials = displayName.slice(0, 1).toUpperCase();
 
   return (
     <section className="space-y-6 py-10">
@@ -75,12 +85,12 @@ export default async function ProfilePage() {
               />
             ) : (
               <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-black/20 text-xl font-semibold text-accent">
-                {(profile?.username || user.email || "U").slice(0, 1).toUpperCase()}
+                {initials}
               </div>
             )}
             <div>
               <h2 className="text-xl font-semibold text-white">
-                {profile?.username || user.user_metadata?.username || "No username set"}
+                {displayName}
               </h2>
               <p className="text-sm text-zinc-400">{user.email}</p>
             </div>
@@ -102,6 +112,10 @@ export default async function ProfilePage() {
             <p className="mt-2 text-sm text-white">{formatDate(user.created_at)}</p>
           </div>
           <div className="rounded-2xl border border-line bg-black/20 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Display name</p>
+            <p className="mt-2 text-sm text-white">{displayName}</p>
+          </div>
+          <div className="rounded-2xl border border-line bg-black/20 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Bio</p>
             <p className="mt-2 text-sm text-white">
               {profile?.bio?.trim() || "No bio saved yet"}
@@ -113,6 +127,16 @@ export default async function ProfilePage() {
           <p className="mt-4 text-sm text-rose-300">{profileError.message}</p>
         ) : null}
       </div>
+
+      <ProfileEditor
+        userId={user.id}
+        email={user.email || ""}
+        createdAt={profile?.created_at || user.created_at}
+        initialDisplayName={profile?.display_name || ""}
+        initialBio={profile?.bio || ""}
+        initialAvatarUrl={profile?.avatar_url || ""}
+        initialUsername={profile?.username || ""}
+      />
 
       <div className="space-y-4">
         <div>
@@ -135,13 +159,18 @@ export default async function ProfilePage() {
         ) : null}
 
         {ratings?.map((rating) => (
-          <RatingCard
+          <ManageRatingCard
             key={rating.id}
-            personId={rating.people.id}
-            personName={rating.people.name}
-            stars={rating.stars}
-            text={rating.text}
-            createdAt={rating.created_at}
+            rating={{
+              id: rating.id,
+              userId: rating.user_id,
+              personId: rating.people.id,
+              personName: rating.people.name,
+              stars: rating.stars,
+              text: rating.text,
+              createdAt: rating.created_at
+            }}
+            currentUserId={user.id}
           />
         ))}
       </div>

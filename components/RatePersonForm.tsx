@@ -4,21 +4,39 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StarRatingInput } from "@/components/StarRatingInput";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
+import type { FeedRating } from "@/types";
 
 type RatePersonFormProps = {
   personId: string;
   personName: string;
+  ratingId?: string;
+  initialStars?: number;
+  initialText?: string;
+  submitLabel?: string;
+  submittingLabel?: string;
+  redirectTo?: string;
+  onSuccess?: (rating: FeedRating) => void;
+  onCancel?: () => void;
 };
 
 export function RatePersonForm({
   personId,
-  personName
+  personName,
+  ratingId,
+  initialStars = 4,
+  initialText = "",
+  submitLabel,
+  submittingLabel,
+  redirectTo,
+  onSuccess,
+  onCancel
 }: RatePersonFormProps) {
   const router = useRouter();
-  const [stars, setStars] = useState(4);
-  const [text, setText] = useState("");
+  const [stars, setStars] = useState(initialStars);
+  const [text, setText] = useState(initialText);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const isEditing = Boolean(ratingId);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -40,20 +58,55 @@ export function RatePersonForm({
     }
 
     setSubmitting(true);
-    const { error: insertError } = await supabase.from("ratings").insert({
-      user_id: user.id,
-      person_id: personId,
+    const payload = {
       stars,
       text: text.trim()
-    });
+    };
 
-    if (insertError) {
-      setError(insertError.message);
+    const query = ratingId
+      ? supabase
+          .from("ratings")
+          .update(payload)
+          .eq("id", ratingId)
+          .eq("user_id", user.id)
+          .select("id, user_id, stars, text, created_at")
+          .single()
+      : supabase
+          .from("ratings")
+          .insert({
+            ...payload,
+            user_id: user.id,
+            person_id: personId
+          })
+          .select("id, user_id, stars, text, created_at")
+          .single();
+
+    const { data, error: mutationError } = await query;
+
+    if (mutationError || !data) {
+      setError(mutationError?.message || "Unable to save rating.");
       setSubmitting(false);
       return;
     }
 
-    router.push(`/person/${personId}`);
+    const savedRating: FeedRating = {
+      id: data.id,
+      userId: data.user_id,
+      personId,
+      personName,
+      stars: data.stars,
+      text: data.text,
+      createdAt: data.created_at
+    };
+
+    onSuccess?.(savedRating);
+
+    if (onSuccess) {
+      setSubmitting(false);
+      return;
+    }
+
+    router.push(redirectTo ?? `/person/${personId}`);
     router.refresh();
   };
 
@@ -97,8 +150,20 @@ export function RatePersonForm({
           disabled={submitting}
           className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-ink hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {submitting ? "Posting..." : "Post rating"}
+          {submitting
+            ? submittingLabel || (isEditing ? "Saving..." : "Posting...")
+            : submitLabel || (isEditing ? "Save changes" : "Post rating")}
         </button>
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+            className="ml-3 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm text-white transition-colors hover:border-zinc-500 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        ) : null}
       </div>
     </form>
   );

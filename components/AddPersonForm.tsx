@@ -5,7 +5,25 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 import { cleanPersonName, normalizePersonName } from "@/lib/utils";
 
-export function AddPersonForm() {
+type CreatedPerson = {
+  id: string;
+  name: string;
+  created_at: string;
+};
+
+type AddPersonFormProps = {
+  className?: string;
+  loginNextPath?: string;
+  redirectOnCreate?: boolean;
+  onPersonCreated?: (person: CreatedPerson) => void | Promise<void>;
+};
+
+export function AddPersonForm({
+  className,
+  loginNextPath = "/add",
+  redirectOnCreate = true,
+  onPersonCreated
+}: AddPersonFormProps) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -28,7 +46,7 @@ export function AddPersonForm() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      router.push("/login?next=/add");
+      router.push(`/login?next=${encodeURIComponent(loginNextPath)}`);
       return;
     }
 
@@ -65,7 +83,7 @@ export function AddPersonForm() {
         name: cleanedName,
         created_by: user.id
       })
-      .select("id")
+      .select("id, name, created_at")
       .single();
 
     if (insertError) {
@@ -78,16 +96,25 @@ export function AddPersonForm() {
       return;
     }
 
-    setSuccess("Person created. Redirecting...");
+    setSuccess(redirectOnCreate ? "Person created. Redirecting..." : "Person created.");
     setName("");
-    router.push(`/person/${data.id}`);
+    await onPersonCreated?.(data);
+
+    if (redirectOnCreate) {
+      router.push(`/person/${data.id}`);
+    }
+
     router.refresh();
+    setSubmitting(false);
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-[1.75rem] border border-line bg-panel/80 p-6 shadow-glow"
+      className={
+        className ??
+        "rounded-[1.75rem] border border-line bg-panel/80 p-6"
+      }
     >
       <label htmlFor="person-name" className="block">
         <span className="mb-2 block text-sm font-medium text-zinc-100">
@@ -119,7 +146,7 @@ export function AddPersonForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="mt-5 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-ink hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-5 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? "Creating..." : "Create person"}
       </button>

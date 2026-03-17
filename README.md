@@ -25,7 +25,7 @@ https://people-rank.vercel.app
 - Protected add person flow with duplicate prevention
 - Protected rate person flow
 - Email/password login and sign up
-- Profile page with auth data, profile data, and the user’s own ratings
+- Profile page with auth data, profile customization, and the user’s own ratings
 - Responsive navbar with accessible mobile menu
 
 ## Pages
@@ -84,7 +84,9 @@ create extension if not exists pg_trgm;
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   username text not null unique,
+  display_name text,
   bio text default '',
+  avatar_url text,
   created_at timestamptz not null default timezone('utc', now())
 );
 
@@ -129,6 +131,19 @@ create unique index if not exists people_normalized_name_key
 on public.people (normalized_name);
 ```
 
+If the `profiles` table already exists, add the profile customization columns like this:
+
+```sql
+alter table public.profiles
+add column if not exists display_name text;
+
+alter table public.profiles
+add column if not exists bio text;
+
+alter table public.profiles
+add column if not exists avatar_url text;
+```
+
 Enable Row Level Security:
 
 ```sql
@@ -163,6 +178,19 @@ for insert
 to authenticated
 with check (auth.uid() = user_id);
 
+create policy "users can update their own ratings"
+on public.ratings
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create policy "users can delete their own ratings"
+on public.ratings
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
 create policy "users can view their own profile row"
 on public.profiles
 for select
@@ -196,3 +224,10 @@ To deploy your own copy:
 3. Add the environment variables in Vercel.
 4. Import the repo into Vercel.
 5. Deploy.
+
+## Profile Customization
+
+- Users can update their display name, bio, and avatar URL from `/profile`.
+- Avatars use external image URLs only.
+- If no avatar URL is set, the UI falls back to initials.
+- No uploads or Supabase Storage are required.
