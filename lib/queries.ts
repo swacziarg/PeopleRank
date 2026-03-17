@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
-import type { FeedRating, PersonDetail, PersonSummary } from "@/types";
+import { buildRankedPeople } from "@/lib/utils";
+import type { FeedRating, PersonDetail, RankedPerson } from "@/types";
 
 export async function getLatestRatings(limit = 20): Promise<FeedRating[]> {
   const supabase = await createSupabaseServerClient();
@@ -62,18 +63,16 @@ export async function getPersonById(id: string): Promise<PersonDetail | null> {
   return data;
 }
 
-export async function searchPeople(query: string): Promise<PersonSummary[]> {
+export async function getRankedPeople(limit = 50): Promise<RankedPerson[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("people")
-    .select("id, name, created_at")
-    .ilike("name", `%${query}%`)
-    .order("name")
-    .limit(25);
+    .select("id, name, created_at, ratings(stars, text)")
+    .limit(limit);
 
   if (error || !data) {
     return [];
   }
 
-  return data;
+  return buildRankedPeople(data);
 }

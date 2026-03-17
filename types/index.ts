@@ -6,6 +6,18 @@ export type PersonSummary = {
 
 export type PersonDetail = PersonSummary;
 
+export type RankedPerson = {
+  id: string;
+  name: string;
+  createdAt: string;
+  avatarUrl: string | null;
+  ratingCount: number;
+  commentCount: number;
+  averageStars: number;
+  engagementScore: number;
+  rank: number;
+};
+
 export type FeedRating = {
   id: string;
   personId: string;

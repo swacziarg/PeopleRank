@@ -17,6 +17,20 @@ a {
   @apply transition-colors;
 }
 
+button,
+input,
+textarea,
+a {
+  @apply outline-none;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  @apply rounded-md ring-2 ring-accent ring-offset-2 ring-offset-ink;
+}
+
 ::selection {
   @apply bg-accent text-ink;
 }

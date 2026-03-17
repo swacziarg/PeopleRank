@@ -1,6 +1,6 @@
 # PeopleRank
 
-PeopleRank is a satirical public rating app built with Next.js 14, Tailwind CSS, and Supabase. Users can browse public ratings, search people, add new entries, and leave short 1 to 5 star reviews. Authenticated access is required for posting and for the profile area.
+PeopleRank is a satirical public rating app built with Next.js 14, Tailwind CSS, and Supabase. Users can browse public ratings, search and rank people by engagement, add new entries, and leave short 1 to 5 star reviews. Authenticated access is required for posting and for the profile area.
 
 ## Live App
 
@@ -20,17 +20,18 @@ https://people-rank.vercel.app
 ## Features
 
 - Public home feed of recent ratings
-- Search by person name
+- Ranked search page with browseable people feed
 - Person detail page with average score and rating history
-- Protected add person flow
+- Protected add person flow with duplicate prevention
 - Protected rate person flow
-- Real login page with email/password sign in and sign up
-- Profile page with auth data, stored profile data, and the user’s own ratings
+- Email/password login and sign up
+- Profile page with auth data, profile data, and the user’s own ratings
+- Responsive navbar with accessible mobile menu
 
 ## Pages
 
 - `/`: latest public ratings feed
-- `/search`: search people by name
+- `/search`: ranked people feed plus live search
 - `/person/[id]`: person details and ratings
 - `/rate/[id]`: protected rating form
 - `/add`: protected form for creating a person
@@ -90,6 +91,9 @@ create table if not exists public.profiles (
 create table if not exists public.people (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  normalized_name text generated always as (
+    lower(regexp_replace(trim(name), '\s+', ' ', 'g'))
+  ) stored unique,
   created_by uuid not null references auth.users(id) on delete cascade,
   created_at timestamptz not null default timezone('utc', now())
 );
@@ -111,6 +115,18 @@ on public.ratings (person_id);
 
 create index if not exists ratings_user_id_idx
 on public.ratings (user_id);
+```
+
+If the `people` table already exists, add the duplicate guard like this:
+
+```sql
+alter table public.people
+add column if not exists normalized_name text generated always as (
+  lower(regexp_replace(trim(name), '\s+', ' ', 'g'))
+) stored;
+
+create unique index if not exists people_normalized_name_key
+on public.people (normalized_name);
 ```
 
 Enable Row Level Security:

@@ -15,6 +15,7 @@ export type Database = {
           created_by: string;
           id: string;
           name: string;
+          normalized_name: string;
         };
         Insert: {
           created_at?: string;
