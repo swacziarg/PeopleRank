@@ -73,7 +73,7 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 shrink-0 px-4 pt-3 sm:px-6">
-      <div className="relative mx-auto flex h-full w-full max-w-6xl items-center justify-between gap-4 rounded-[2rem] border border-white/8 bg-zinc-950/80 px-4 py-3 backdrop-blur-sm sm:px-5">
+      <div className="relative mx-auto flex h-full w-full max-w-6xl items-center justify-between gap-4 rounded-[2rem] border border-white/8 bg-zinc-950/90 px-4 py-3 backdrop-blur sm:px-5">
         <div className="min-w-0 flex-1">
           <Link href="/" className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent text-lg font-semibold text-ink">

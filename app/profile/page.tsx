@@ -1,4 +1,3 @@
-import { SignOutButton } from "@/components/SignOutButton";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { formatDate, getInitials } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
@@ -107,7 +106,6 @@ export default async function ProfilePage() {
               initialAvatarUrl={profile?.avatar_url || ""}
               initialUsername={profile?.username || ""}
             />
-            <SignOutButton />
           </div>
         </div>
 
@@ -180,6 +178,7 @@ export default async function ProfilePage() {
               createdAt: rating.created_at
             }}
             currentUserId={user.id}
+            showAuthor={false}
           />
         ))}
       </div>

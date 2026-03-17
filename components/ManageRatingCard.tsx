@@ -11,12 +11,14 @@ type ManageRatingCardProps = {
   rating: FeedRating;
   currentUserId: string | null;
   showPersonLink?: boolean;
+  showAuthor?: boolean;
 };
 
 export function ManageRatingCard({
   rating,
   currentUserId,
-  showPersonLink = true
+  showPersonLink = true,
+  showAuthor = true
 }: ManageRatingCardProps) {
   const router = useRouter();
   const [currentRating, setCurrentRating] = useState(rating);
@@ -89,6 +91,7 @@ export function ManageRatingCard({
       text={currentRating.text}
       createdAt={currentRating.createdAt}
       showPersonLink={showPersonLink}
+      showAuthor={showAuthor}
       actions={
         isOwner ? (
           <div className="flex items-center gap-3">

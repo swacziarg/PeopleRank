@@ -107,6 +107,8 @@ export function ProfileEditor({
   };
 
   const handleDeleteProfile = async () => {
+    setIsMenuOpen(false);
+
     if (
       isDeletingProfile ||
       !window.confirm(
@@ -140,6 +142,15 @@ export function ProfileEditor({
     router.refresh();
   };
 
+  const handleSignOut = async () => {
+    setIsMenuOpen(false);
+
+    const supabase = getSupabaseBrowserClient();
+    await supabase.auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  };
+
   return (
     <div className="w-full">
       <div
@@ -156,7 +167,7 @@ export function ProfileEditor({
       >
         <button
           type="button"
-          aria-label="Open profile options"
+          aria-label="Profile options"
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}
           onClick={() => setIsMenuOpen((open) => !open)}
@@ -181,23 +192,25 @@ export function ProfileEditor({
             <button
               type="button"
               role="menuitem"
-              onClick={handleCancel}
-              className="w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-300 transition-colors hover:bg-white/5"
+              onClick={handleDeleteProfile}
+              disabled={isDeletingProfile}
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Cancel
+              {isDeletingProfile ? "Deleting profile..." : "Delete profile"}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                void handleSignOut();
+              }}
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
+            >
+              Sign out
             </button>
           </div>
         ) : null}
       </div>
-
-      <button
-        type="button"
-        onClick={handleDeleteProfile}
-        disabled={isDeletingProfile}
-        className="mt-3 rounded-full border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-200 transition-colors hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isDeletingProfile ? "Deleting profile..." : "Delete profile"}
-      </button>
 
       {isEditing ? (
         <div className="mt-4 w-full rounded-[1.75rem] border border-line bg-panel/80 p-6 shadow-glow sm:min-w-[32rem]">

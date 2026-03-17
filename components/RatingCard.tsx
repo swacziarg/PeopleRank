@@ -11,6 +11,7 @@ type RatingCardProps = {
   text: string;
   createdAt: string;
   showPersonLink?: boolean;
+  showAuthor?: boolean;
   actions?: ReactNode;
 };
 
@@ -23,6 +24,7 @@ export function RatingCard({
   text,
   createdAt,
   showPersonLink = true,
+  showAuthor = true,
   actions
 }: RatingCardProps) {
   const initials = getInitials(authorName);
@@ -47,20 +49,22 @@ export function RatingCard({
           {formatDate(createdAt)}
         </p>
       </div>
-      <div className="mt-4 flex items-center gap-3">
-        {authorAvatarUrl ? (
-          <img
-            src={authorAvatarUrl}
-            alt={`${authorName} avatar`}
-            className="h-8 w-8 rounded-full border border-line object-cover"
-          />
-        ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-black/20 text-xs font-semibold text-accent">
-            {initials}
-          </div>
-        )}
-        <p className="text-sm font-medium text-zinc-200">{authorName}</p>
-      </div>
+      {showAuthor ? (
+        <div className="mt-4 flex items-center gap-3">
+          {authorAvatarUrl ? (
+            <img
+              src={authorAvatarUrl}
+              alt={`${authorName} avatar`}
+              className="h-8 w-8 rounded-full border border-line object-cover"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-black/20 text-xs font-semibold text-accent">
+              {initials}
+            </div>
+          )}
+          <p className="text-sm font-medium text-zinc-200">{authorName}</p>
+        </div>
+      ) : null}
       <p className="mt-4 text-zinc-300">{text}</p>
       {actions ? <div className="mt-4">{actions}</div> : null}
     </article>
