@@ -67,7 +67,7 @@ PeopleRank is a satirical public rating app built with Next.js 14, Tailwind CSS,
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-publishable-key
 ```
 
 4. Install dependencies:
@@ -88,6 +88,7 @@ Run this in the Supabase SQL editor:
 
 ```sql
 create extension if not exists "pgcrypto";
+create extension if not exists pg_trgm;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -112,18 +113,14 @@ create table if not exists public.ratings (
   created_at timestamptz not null default timezone('utc', now())
 );
 
-create index if not exists people_name_idx on public.people using gin (name gin_trgm_ops);
-create index if not exists ratings_person_id_idx on public.ratings (person_id);
-create index if not exists ratings_user_id_idx on public.ratings (user_id);
+create index if not exists people_name_idx 
+on public.people using gin (name gin_trgm_ops);
 
-create extension if not exists pg_trgm;
-```
+create index if not exists ratings_person_id_idx 
+on public.ratings (person_id);
 
-If your SQL editor complains about the trigram index order, run this version instead:
-
-```sql
-create extension if not exists pg_trgm;
-create index if not exists people_name_idx on public.people using gin (name gin_trgm_ops);
+create index if not exists ratings_user_id_idx 
+on public.ratings (user_id);
 ```
 
 ## Row Level Security
@@ -232,7 +229,7 @@ const { data, error } = await supabase
 6. Use:
    - Build command: `npm install && npm run build`
    - Start command: `npm run start`
-7. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Render environment variables.
+7. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` in Render environment variables.
 8. Deploy.
 
 ## MVP Scope

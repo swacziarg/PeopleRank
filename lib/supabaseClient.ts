@@ -1,21 +1,17 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
-
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://example.supabase.co";
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "public-anon-key-placeholder";
+import { createClient as createBrowserSupabaseClient } from "@/utils/supabase/client";
 
 export const isSupabaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
 );
 
 let browserClient: SupabaseClient<Database> | undefined;
 
 export function getSupabaseBrowserClient() {
   if (!browserClient) {
-    browserClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
+    browserClient = createBrowserSupabaseClient();
   }
 
   return browserClient;

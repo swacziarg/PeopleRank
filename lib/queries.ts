@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import type { FeedRating, PersonDetail, PersonSummary } from "@/types";
 
 export async function getLatestRatings(limit = 20): Promise<FeedRating[]> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("ratings")
     .select("id, stars, text, created_at, people!inner(id, name)")
@@ -26,7 +26,7 @@ export async function getLatestRatings(limit = 20): Promise<FeedRating[]> {
 export async function getRatingsForPerson(
   personId: string
 ): Promise<FeedRating[]> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("ratings")
     .select("id, stars, text, created_at")
@@ -48,7 +48,7 @@ export async function getRatingsForPerson(
 }
 
 export async function getPersonById(id: string): Promise<PersonDetail | null> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("people")
     .select("id, name, created_at")
@@ -63,7 +63,7 @@ export async function getPersonById(id: string): Promise<PersonDetail | null> {
 }
 
 export async function searchPeople(query: string): Promise<PersonSummary[]> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("people")
     .select("id, name, created_at")
