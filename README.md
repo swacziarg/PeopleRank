@@ -1,4 +1,4 @@
-# PeopleRank
+# [PeopleRank](/https://en.wikipedia.org/wiki/Nosedive_(Black_Mirror))
 
 PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious people ratings. Visitors can browse recent ratings and ranked people pages, while authenticated users can add people, post star ratings, edit their own ratings, and manage their profile.
 
