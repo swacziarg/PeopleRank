@@ -1,5 +1,10 @@
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
-import { fetchRankedPeople } from "@/lib/rankedPeople";
+import {
+  fetchRankedPeople,
+  fetchRankedPeoplePage,
+  type RankedPeoplePageResult,
+  type RankedPeopleSort
+} from "@/lib/rankedPeople";
 import type { FeedRating, PersonDetail, RankedPerson } from "@/types";
 
 export async function getLatestRatings(limit = 20): Promise<FeedRating[]> {
@@ -68,7 +73,7 @@ export async function getPersonById(id: string): Promise<PersonDetail | null> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("people")
-    .select("id, name, created_at")
+    .select("id, name, created_at, created_by")
     .eq("id", id)
     .single();
 
@@ -82,4 +87,24 @@ export async function getPersonById(id: string): Promise<PersonDetail | null> {
 export async function getRankedPeople(limit = 50): Promise<RankedPerson[]> {
   const supabase = await createSupabaseServerClient();
   return fetchRankedPeople(supabase, { limit, sort: "most-rated" });
+}
+
+export async function getRankedPeoplePage({
+  page = 1,
+  pageSize = 20,
+  search,
+  sort = "most-rated"
+}: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  sort?: RankedPeopleSort;
+} = {}): Promise<RankedPeoplePageResult> {
+  const supabase = await createSupabaseServerClient();
+  return fetchRankedPeoplePage(supabase, {
+    page,
+    pageSize,
+    search,
+    sort
+  });
 }

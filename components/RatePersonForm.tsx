@@ -125,7 +125,7 @@ export function RatePersonForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-[1.75rem] border border-line bg-panel/80 p-6 shadow-glow"
+      className="rounded-3xl border border-line bg-panel p-6"
     >
       <div className="space-y-5">
         <div>
@@ -146,7 +146,7 @@ export function RatePersonForm({
             maxLength={200}
             rows={4}
             placeholder="Competent under pressure, suspiciously bad at parking."
-            className="w-full rounded-2xl border border-line bg-black/20 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
+            className="w-full rounded-2xl border border-line bg-zinc-900 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
           />
         </label>
 
@@ -171,7 +171,7 @@ export function RatePersonForm({
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="ml-3 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm text-white transition-colors hover:border-zinc-500 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+            className="ml-3 rounded-full border border-line bg-zinc-900 px-5 py-2.5 text-sm text-white transition-colors hover:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>

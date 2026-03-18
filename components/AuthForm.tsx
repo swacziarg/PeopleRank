@@ -89,8 +89,8 @@ export function AuthForm({ nextPath }: AuthFormProps) {
   };
 
   return (
-    <div className="max-w-xl rounded-[1.75rem] border border-line bg-panel/80 p-6 shadow-glow">
-      <div className="flex rounded-full border border-line bg-black/20 p-1">
+    <div className="max-w-xl rounded-3xl border border-line bg-panel p-6">
+      <div className="flex rounded-full border border-line bg-zinc-900 p-1">
         <button
           type="button"
           onClick={() => {
@@ -133,7 +133,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               maxLength={40}
-              className="w-full rounded-2xl border border-line bg-black/20 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
+              className="w-full rounded-2xl border border-line bg-zinc-900 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
               placeholder="ranked-citizen"
             />
           </label>
@@ -148,7 +148,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
-            className="w-full rounded-2xl border border-line bg-black/20 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
+            className="w-full rounded-2xl border border-line bg-zinc-900 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
             placeholder="you@example.com"
           />
         </label>
@@ -163,7 +163,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
             onChange={(event) => setPassword(event.target.value)}
             minLength={6}
             required
-            className="w-full rounded-2xl border border-line bg-black/20 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
+            className="w-full rounded-2xl border border-line bg-zinc-900 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
             placeholder="At least 6 characters"
           />
         </label>

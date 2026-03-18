@@ -29,7 +29,7 @@ export default async function HomePage() {
           </Link>
           <Link
             href="/add"
-            className="rounded-full border border-line bg-white/5 px-5 py-2.5 text-sm font-medium text-white hover:border-zinc-500 hover:bg-white/10"
+            className="rounded-full border border-line bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:border-zinc-500"
           >
             Add a person
           </Link>
@@ -56,7 +56,7 @@ export default async function HomePage() {
         </div>
 
         {ratings.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-line bg-panel/70 p-8 text-center text-zinc-400">
+          <div className="rounded-3xl border border-line bg-panel p-8 text-center text-zinc-400">
             No ratings yet. Start the chaos by adding someone and leaving the
             first review.
           </div>

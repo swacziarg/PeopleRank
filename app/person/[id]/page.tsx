@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DeletePersonButton } from "@/components/DeletePersonButton";
 import { ManageRatingCard } from "@/components/ManageRatingCard";
 import { getPersonById, getRatingsForPerson } from "@/lib/queries";
 import { formatAverage } from "@/lib/utils";
@@ -42,7 +43,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
 
   return (
     <section className="space-y-8 py-10">
-      <div className="rounded-[2rem] border border-line bg-panel/80 p-8 shadow-glow">
+      <div className="rounded-3xl border border-line bg-panel p-8">
         <p className="text-sm uppercase tracking-[0.3em] text-accent">
           Person Page
         </p>
@@ -57,19 +58,24 @@ export default async function PersonPage({ params }: PersonPageProps) {
               from {ratings.length} {ratings.length === 1 ? "review" : "reviews"}
             </p>
           </div>
-          <Link
-            href={`/rate/${person.id}`}
-            className="inline-flex rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-ink hover:bg-amber-300"
-          >
-            Rate this person
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={`/rate/${person.id}`}
+              className="inline-flex rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-ink hover:bg-amber-300"
+            >
+              Rate this person
+            </Link>
+            {user?.id === person.created_by ? (
+              <DeletePersonButton personId={person.id} currentUserId={user.id} />
+            ) : null}
+          </div>
         </div>
       </div>
 
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold text-white">Ratings</h2>
         {ratings.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-line bg-panel/70 p-8 text-center text-zinc-400">
+          <div className="rounded-3xl border border-line bg-panel p-8 text-center text-zinc-400">
             No public reviews yet. You could be first, which is a dangerous
             amount of influence.
           </div>

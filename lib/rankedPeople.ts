@@ -18,6 +18,11 @@ export type RankedPeopleSort =
   | "highest-rated"
   | "newest";
 
+export type RankedPeoplePageResult = {
+  people: RankedPerson[];
+  totalCount: number;
+};
+
 const defaultLimit = 50;
 
 function toNumber(value: number | string | null | undefined) {
@@ -257,4 +262,68 @@ export async function fetchRankedPeople(
     aggregateData.commentRows,
     sort
   ).slice(0, limit);
+}
+
+export async function fetchRankedPeoplePage(
+  client: SupabaseClient<Database>,
+  {
+    page = 1,
+    pageSize = 20,
+    search,
+    sort = "most-rated"
+  }: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    sort?: RankedPeopleSort;
+  } = {}
+): Promise<RankedPeoplePageResult> {
+  const safePage = Math.max(1, page);
+  const safePageSize = Math.max(1, pageSize);
+  const from = (safePage - 1) * safePageSize;
+  const to = from + safePageSize - 1;
+  const rangeFrom = sort === "newest" ? from : 0;
+
+  let query = client
+    .from("people")
+    .select("id, name, created_at", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(rangeFrom, to);
+
+  if (search) {
+    query = query.ilike("name", `%${search}%`);
+  }
+
+  const { data: people, error, count } = await query;
+
+  if (error || !people?.length) {
+    return {
+      people: [],
+      totalCount: count ?? 0
+    };
+  }
+
+  const personIds = people.map((person) => person.id);
+  const aggregateData =
+    (await fetchRatingAggregates(client, personIds)) ??
+    (await fetchRatingAggregatesFallback(client, personIds));
+
+  const rankedPeople = aggregateData
+    ? buildRankedPeople(people, aggregateData.ratingRows, aggregateData.commentRows, sort)
+    : sortRankedPeople(people.map((person) => createRankedPerson(person)), sort);
+
+  if (sort === "newest") {
+    return {
+      people: rankedPeople.map((person, index) => ({
+        ...person,
+        rank: from + index + 1
+      })),
+      totalCount: count ?? 0
+    };
+  }
+
+  return {
+    people: rankedPeople.slice(from, to + 1),
+    totalCount: count ?? 0
+  };
 }

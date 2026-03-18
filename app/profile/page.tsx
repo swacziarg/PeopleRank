@@ -63,6 +63,13 @@ export default async function ProfilePage() {
     user.email ||
     "No name set";
   const initials = getInitials(displayName);
+  const ratingList = ratings ?? [];
+  const totalRatings = ratingList.length;
+  const averageRating =
+    totalRatings > 0
+      ? ratingList.reduce((sum, rating) => sum + rating.stars, 0) / totalRatings
+      : 0;
+  const totalComments = ratingList.filter((rating) => rating.text.trim().length > 0).length;
 
   return (
     <section className="space-y-6 py-10">
@@ -75,7 +82,7 @@ export default async function ProfilePage() {
         </p>
       </div>
 
-      <div className="rounded-[1.75rem] border border-line bg-panel/80 p-6 shadow-glow">
+      <div className="rounded-3xl border border-line bg-panel p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-4">
             {avatarUrl ? (
@@ -85,7 +92,7 @@ export default async function ProfilePage() {
                 className="h-16 w-16 rounded-full border border-line object-cover"
               />
             ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-black/20 text-xl font-semibold text-accent">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-zinc-900 text-xl font-semibold text-accent">
                 {initials}
               </div>
             )}
@@ -109,24 +116,47 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-line bg-black/20 p-4">
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-line bg-zinc-950 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+              Ratings given
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{totalRatings}</p>
+          </div>
+          <div className="rounded-2xl border border-line bg-zinc-950 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+              Average rating
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">
+              {totalRatings > 0 ? averageRating.toFixed(1) : "0.0"}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-line bg-zinc-950 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+              Comments written
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{totalComments}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-line bg-zinc-950 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Email</p>
             <p className="mt-2 text-sm text-white">{user.email || "Not available"}</p>
           </div>
-          <div className="rounded-2xl border border-line bg-black/20 p-4">
+          <div className="rounded-2xl border border-line bg-zinc-950 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">User ID</p>
             <p className="mt-2 break-all text-sm text-white">{user.id}</p>
           </div>
-          <div className="rounded-2xl border border-line bg-black/20 p-4">
+          <div className="rounded-2xl border border-line bg-zinc-950 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Joined</p>
             <p className="mt-2 text-sm text-white">{formatDate(user.created_at)}</p>
           </div>
-          <div className="rounded-2xl border border-line bg-black/20 p-4">
+          <div className="rounded-2xl border border-line bg-zinc-950 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Display name</p>
             <p className="mt-2 text-sm text-white">{displayName}</p>
           </div>
-          <div className="rounded-2xl border border-line bg-black/20 p-4">
+          <div className="rounded-2xl border border-line bg-zinc-950 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Bio</p>
             <p className="mt-2 text-sm text-white">
               {profile?.bio?.trim() || "No bio saved yet"}
@@ -154,7 +184,7 @@ export default async function ProfilePage() {
         ) : null}
 
         {!ratingsError && (!ratings || ratings.length === 0) ? (
-          <div className="rounded-3xl border border-dashed border-line bg-panel/70 p-8 text-center text-zinc-400">
+          <div className="rounded-3xl border border-line bg-panel p-8 text-center text-zinc-400">
             You have not posted any ratings yet.
           </div>
         ) : null}

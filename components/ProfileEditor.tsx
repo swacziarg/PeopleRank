@@ -171,7 +171,7 @@ export function ProfileEditor({
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}
           onClick={() => setIsMenuOpen((open) => !open)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl leading-none text-white transition-colors hover:bg-white/10"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-zinc-900 text-xl leading-none text-white transition-colors hover:border-zinc-500"
         >
           <span aria-hidden="true">⋯</span>
         </button>
@@ -179,13 +179,13 @@ export function ProfileEditor({
         {isMenuOpen ? (
           <div
             role="menu"
-            className="absolute right-0 top-full z-20 mt-2 min-w-40 rounded-2xl border border-white/8 bg-zinc-950/95 p-2 shadow-2xl"
+            className="absolute right-0 top-full z-20 mt-2 min-w-40 rounded-2xl border border-line bg-zinc-950 p-2"
           >
             <button
               type="button"
               role="menuitem"
               onClick={openEditor}
-              className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-zinc-900"
             >
               Edit profile
             </button>
@@ -194,7 +194,7 @@ export function ProfileEditor({
               role="menuitem"
               onClick={handleDeleteProfile}
               disabled={isDeletingProfile}
-              className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isDeletingProfile ? "Deleting profile..." : "Delete profile"}
             </button>
@@ -204,7 +204,7 @@ export function ProfileEditor({
               onClick={() => {
                 void handleSignOut();
               }}
-              className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-zinc-900"
             >
               Sign out
             </button>
@@ -213,7 +213,7 @@ export function ProfileEditor({
       </div>
 
       {isEditing ? (
-        <div className="mt-4 w-full rounded-[1.75rem] border border-line bg-panel/80 p-6 shadow-glow sm:min-w-[32rem]">
+        <div className="mt-4 w-full rounded-3xl border border-line bg-panel p-6 sm:min-w-[32rem]">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-4">
               {normalizedAvatarUrl ? (
@@ -223,7 +223,7 @@ export function ProfileEditor({
                   className="h-16 w-16 rounded-full border border-line object-cover"
                 />
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-black/20 text-xl font-semibold text-accent">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-zinc-900 text-xl font-semibold text-accent">
                   {initials}
                 </div>
               )}
@@ -248,7 +248,7 @@ export function ProfileEditor({
                 onChange={(event) => setDisplayName(event.target.value)}
                 maxLength={80}
                 placeholder="How your name should appear"
-                className="w-full rounded-2xl border border-line bg-black/20 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
+                className="w-full rounded-2xl border border-line bg-zinc-900 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
               />
             </label>
 
@@ -261,7 +261,7 @@ export function ProfileEditor({
                 value={avatarUrl}
                 onChange={(event) => setAvatarUrl(event.target.value)}
                 placeholder="https://example.com/avatar.jpg"
-                className="w-full rounded-2xl border border-line bg-black/20 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
+                className="w-full rounded-2xl border border-line bg-zinc-900 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
               />
             </label>
 
@@ -273,16 +273,16 @@ export function ProfileEditor({
                 rows={4}
                 maxLength={280}
                 placeholder="Short bio"
-                className="w-full rounded-2xl border border-line bg-black/20 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
+                className="w-full rounded-2xl border border-line bg-zinc-900 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-accent"
               />
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-line bg-black/20 p-4">
+              <div className="rounded-2xl border border-line bg-zinc-950 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Email</p>
                 <p className="mt-2 text-sm text-white">{email || "Not available"}</p>
               </div>
-              <div className="rounded-2xl border border-line bg-black/20 p-4">
+              <div className="rounded-2xl border border-line bg-zinc-950 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Joined</p>
                 <p className="mt-2 text-sm text-white">{formatDate(createdAt)}</p>
               </div>
@@ -302,7 +302,7 @@ export function ProfileEditor({
               <button
                 type="button"
                 onClick={handleCancel}
-                className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                className="rounded-full border border-line bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:border-zinc-500"
               >
                 Cancel
               </button>

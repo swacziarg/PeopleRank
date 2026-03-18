@@ -30,7 +30,7 @@ export function RatingCard({
   const initials = getInitials(authorName);
 
   return (
-    <article className="rounded-[1.75rem] border border-line bg-panel/80 p-5 shadow-glow">
+    <article className="rounded-3xl border border-line bg-panel p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           {showPersonLink ? (
@@ -58,7 +58,7 @@ export function RatingCard({
               className="h-8 w-8 rounded-full border border-line object-cover"
             />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-black/20 text-xs font-semibold text-accent">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-zinc-900 text-xs font-semibold text-accent">
               {initials}
             </div>
           )}

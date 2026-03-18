@@ -101,7 +101,7 @@ export function ManageRatingCard({
                 setError("");
                 setIsEditing(true);
               }}
-              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:border-zinc-500 hover:bg-white/10"
+              className="rounded-full border border-line bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:border-zinc-500"
             >
               Edit
             </button>
@@ -109,7 +109,7 @@ export function ManageRatingCard({
               type="button"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:border-zinc-500 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full border border-line bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </button>
