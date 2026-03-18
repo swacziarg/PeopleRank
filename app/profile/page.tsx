@@ -1,5 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
-import { formatDate, getInitials } from "@/lib/utils";
+import { Avatar } from "@/components/Avatar";
+import { getRatingsByUser } from "@/lib/queries";
+import { formatDate, resolveAvatarLabel } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { ManageRatingCard } from "@/components/ManageRatingCard";
 import { ProfileEditor } from "@/components/ProfileEditor";
@@ -32,21 +34,14 @@ export default async function ProfilePage() {
     );
   }
 
-  const [{ data: profile, error: profileError }, { data: ratings, error: ratingsError }] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("username, display_name, bio, avatar_url, created_at")
-        .eq("id", user.id)
-        .maybeSingle(),
-      supabase
-        .from("ratings")
-        .select(
-          "id, user_id, stars, text, created_at, people!inner(id, name), profiles!ratings_user_id_fkey(display_name, avatar_url, username)"
-        )
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-    ]);
+  const [{ data: profile, error: profileError }, ratings] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("username, display_name, bio, avatar_url, created_at")
+      .eq("id", user.id)
+      .maybeSingle(),
+    getRatingsByUser(user.id, user.id)
+  ]);
 
   const avatarUrl =
     typeof profile?.avatar_url === "string" && profile.avatar_url.trim()
@@ -62,8 +57,13 @@ export default async function ProfilePage() {
     user.user_metadata?.username ||
     user.email ||
     "No name set";
-  const initials = getInitials(displayName);
-  const ratingList = ratings ?? [];
+  const avatarLabel = resolveAvatarLabel(
+    profile?.display_name,
+    profile?.username,
+    typeof user.user_metadata?.name === "string" ? user.user_metadata.name : null,
+    user.email
+  );
+  const ratingList = ratings;
   const totalRatings = ratingList.length;
   const averageRating =
     totalRatings > 0
@@ -85,17 +85,13 @@ export default async function ProfilePage() {
       <div className="rounded-3xl border border-line bg-panel p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-4">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Profile avatar"
-                className="h-16 w-16 rounded-full border border-line object-cover"
-              />
-            ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-zinc-900 text-xl font-semibold text-accent">
-                {initials}
-              </div>
-            )}
+            <Avatar
+              imageUrl={avatarUrl}
+              label={avatarLabel}
+              alt="Profile avatar"
+              sizeClassName="h-16 w-16"
+              textClassName="text-xl"
+            />
             <div>
               <h2 className="text-xl font-semibold text-white">
                 {displayName}
@@ -177,36 +173,16 @@ export default async function ProfilePage() {
           </p>
         </div>
 
-        {ratingsError ? (
-          <div className="rounded-3xl border border-rose-500/30 bg-rose-500/10 p-5 text-sm text-rose-100">
-            {ratingsError.message}
-          </div>
-        ) : null}
-
-        {!ratingsError && (!ratings || ratings.length === 0) ? (
+        {ratings.length === 0 ? (
           <div className="rounded-3xl border border-line bg-panel p-8 text-center text-zinc-400">
             You have not posted any ratings yet.
           </div>
         ) : null}
 
-        {ratings?.map((rating) => (
+        {ratings.map((rating) => (
           <ManageRatingCard
             key={rating.id}
-            rating={{
-              id: rating.id,
-              userId: rating.user_id,
-              personId: rating.people.id,
-              personName: rating.people.name,
-              authorName:
-                rating.profiles?.display_name?.trim() ||
-                user.email ||
-                rating.profiles?.username?.trim() ||
-                "Unknown user",
-              authorAvatarUrl: rating.profiles?.avatar_url ?? null,
-              stars: rating.stars,
-              text: rating.text,
-              createdAt: rating.created_at
-            }}
+            rating={rating}
             currentUserId={user.id}
             showAuthor={false}
           />

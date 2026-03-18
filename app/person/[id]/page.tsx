@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Avatar } from "@/components/Avatar";
 import { DeletePersonButton } from "@/components/DeletePersonButton";
+import { EditPersonForm } from "@/components/EditPersonForm";
 import { ManageRatingCard } from "@/components/ManageRatingCard";
+import { RatingTrendChart } from "@/components/RatingTrendChart";
 import { getPersonById, getRatingsForPerson } from "@/lib/queries";
 import { formatAverage } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
@@ -35,7 +38,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     notFound();
   }
 
-  const ratings = await getRatingsForPerson(params.id);
+  const ratings = await getRatingsForPerson(params.id, user?.id);
   const average =
     ratings.length > 0
       ? ratings.reduce((sum, item) => sum + item.stars, 0) / ratings.length
@@ -47,9 +50,45 @@ export default async function PersonPage({ params }: PersonPageProps) {
         <p className="text-sm uppercase tracking-[0.3em] text-accent">
           Person Page
         </p>
-        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-4 flex flex-col gap-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-4">
+              <Avatar
+                imageUrl={person.image_url}
+                label={person.name}
+                alt={`${person.name} avatar`}
+                sizeClassName="h-20 w-20"
+                textClassName="text-2xl"
+              />
+              <div>
+                <h1 className="text-4xl font-semibold text-white">{person.name}</h1>
+                {person.description?.trim() ? (
+                  <p className="mt-3 max-w-2xl text-zinc-300">{person.description}</p>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={`/rate/${person.id}`}
+                className="inline-flex rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-ink hover:bg-amber-300"
+              >
+                Rate this person
+              </Link>
+              {user?.id === person.created_by ? (
+                <>
+                  <EditPersonForm
+                    personId={person.id}
+                    initialName={person.name}
+                    initialDescription={person.description ?? ""}
+                    initialImageUrl={person.image_url ?? ""}
+                  />
+                  <DeletePersonButton personId={person.id} currentUserId={user.id} />
+                </>
+              ) : null}
+            </div>
+          </div>
+
           <div>
-            <h1 className="text-4xl font-semibold text-white">{person.name}</h1>
             <p className="mt-2 text-zinc-400">
               Average rating:{" "}
               <span className="font-medium text-white">
@@ -58,19 +97,10 @@ export default async function PersonPage({ params }: PersonPageProps) {
               from {ratings.length} {ratings.length === 1 ? "review" : "reviews"}
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href={`/rate/${person.id}`}
-              className="inline-flex rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-ink hover:bg-amber-300"
-            >
-              Rate this person
-            </Link>
-            {user?.id === person.created_by ? (
-              <DeletePersonButton personId={person.id} currentUserId={user.id} />
-            ) : null}
-          </div>
         </div>
       </div>
+
+      <RatingTrendChart ratings={ratings} />
 
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold text-white">Ratings</h2>

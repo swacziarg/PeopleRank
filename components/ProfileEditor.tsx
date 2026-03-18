@@ -2,7 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDate, getInitials } from "@/lib/utils";
+import { Avatar } from "@/components/Avatar";
+import { formatDate } from "@/lib/utils";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 type ProfileEditorProps = {
@@ -37,7 +38,7 @@ export function ProfileEditor({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const resolvedName = displayName.trim() || initialUsername || email || "User";
-  const initials = useMemo(() => getInitials(resolvedName), [resolvedName]);
+  const avatarLabel = useMemo(() => resolvedName, [resolvedName]);
   const normalizedAvatarUrl = avatarUrl.trim();
 
   useEffect(() => {
@@ -216,17 +217,13 @@ export function ProfileEditor({
         <div className="mt-4 w-full rounded-3xl border border-line bg-panel p-6 sm:min-w-[32rem]">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-4">
-              {normalizedAvatarUrl ? (
-                <img
-                  src={normalizedAvatarUrl}
-                  alt="Profile avatar preview"
-                  className="h-16 w-16 rounded-full border border-line object-cover"
-                />
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-zinc-900 text-xl font-semibold text-accent">
-                  {initials}
-                </div>
-              )}
+              <Avatar
+                imageUrl={normalizedAvatarUrl}
+                label={avatarLabel}
+                alt="Profile avatar preview"
+                sizeClassName="h-16 w-16"
+                textClassName="text-xl"
+              />
               <div>
                 <h2 className="text-xl font-semibold text-white">{resolvedName}</h2>
                 <p className="text-sm text-zinc-400">{email}</p>

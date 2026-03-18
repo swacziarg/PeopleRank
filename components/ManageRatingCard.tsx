@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { RatingLikeButton } from "@/components/RatingLikeButton";
 import { RatingCard } from "@/components/RatingCard";
 import { RatePersonForm } from "@/components/RatePersonForm";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -67,7 +68,11 @@ export function ManageRatingCard({
           initialStars={currentRating.stars}
           initialText={currentRating.text}
           onSuccess={(updatedRating) => {
-            setCurrentRating(updatedRating);
+            setCurrentRating((previousRating) => ({
+              ...updatedRating,
+              likeCount: previousRating.likeCount,
+              likedByCurrentUser: previousRating.likedByCurrentUser
+            }));
             setIsEditing(false);
             router.refresh();
           }}
@@ -87,11 +92,20 @@ export function ManageRatingCard({
       personName={currentRating.personName}
       authorName={currentRating.authorName}
       authorAvatarUrl={currentRating.authorAvatarUrl}
+      authorAvatarLabel={currentRating.authorAvatarLabel}
       stars={currentRating.stars}
       text={currentRating.text}
       createdAt={currentRating.createdAt}
       showPersonLink={showPersonLink}
       showAuthor={showAuthor}
+      likeControl={
+        <RatingLikeButton
+          ratingId={currentRating.id}
+          initialLikeCount={currentRating.likeCount}
+          initialLiked={currentRating.likedByCurrentUser}
+          text={currentRating.text}
+        />
+      }
       actions={
         isOwner ? (
           <div className="flex items-center gap-3">

@@ -1,10 +1,16 @@
 import Link from "next/link";
+import { RatingLikeButton } from "@/components/RatingLikeButton";
 import { RatingCard } from "@/components/RatingCard";
 import { getLatestRatings } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
 export default async function HomePage() {
-  const ratings = isSupabaseConfigured ? await getLatestRatings() : [];
+  const supabase = isSupabaseConfigured ? await createSupabaseServerClient() : null;
+  const {
+    data: { user }
+  } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+  const ratings = isSupabaseConfigured ? await getLatestRatings(20, user?.id) : [];
 
   return (
     <section className="space-y-8 py-10">
@@ -69,9 +75,18 @@ export default async function HomePage() {
                 personName={rating.personName}
                 authorName={rating.authorName}
                 authorAvatarUrl={rating.authorAvatarUrl}
+                authorAvatarLabel={rating.authorAvatarLabel}
                 stars={rating.stars}
                 text={rating.text}
                 createdAt={rating.createdAt}
+                likeControl={
+                  <RatingLikeButton
+                    ratingId={rating.id}
+                    initialLikeCount={rating.likeCount}
+                    initialLiked={rating.likedByCurrentUser}
+                    text={rating.text}
+                  />
+                }
               />
             ))}
           </div>

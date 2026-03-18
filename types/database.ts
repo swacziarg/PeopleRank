@@ -13,20 +13,26 @@ export type Database = {
         Row: {
           created_at: string;
           created_by: string;
+          description: string | null;
           id: string;
+          image_url: string | null;
           name: string;
           normalized_name: string;
         };
         Insert: {
           created_at?: string;
           created_by: string;
+          description?: string | null;
           id?: string;
+          image_url?: string | null;
           name: string;
         };
         Update: {
           created_at?: string;
           created_by?: string;
+          description?: string | null;
           id?: string;
+          image_url?: string | null;
           name?: string;
         };
         Relationships: [
@@ -64,6 +70,37 @@ export type Database = {
           username?: string;
         };
         Relationships: [];
+      };
+      rating_likes: {
+        Row: {
+          created_at: string | null;
+          rating_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          rating_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          rating_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rating_likes_rating_id_fkey";
+            columns: ["rating_id"];
+            referencedRelation: "ratings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "rating_likes_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       ratings: {
         Row: {
@@ -121,6 +158,8 @@ export type Database = {
           created_at: string;
           engagement_score: number;
           id: string;
+          image_url: string | null;
+          lowest_stars: number | null;
           name: string;
           rank: number;
           rating_count: number;

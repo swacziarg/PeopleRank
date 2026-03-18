@@ -38,3 +38,15 @@ export function getInitials(input: string) {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 }
+
+export function resolveAvatarLabel(...values: Array<string | null | undefined>) {
+  for (const value of values) {
+    const normalizedValue = value?.trim();
+
+    if (normalizedValue) {
+      return normalizedValue;
+    }
+  }
+
+  return "?";
+}

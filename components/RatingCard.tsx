@@ -1,17 +1,20 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { formatDate, getInitials, renderStars } from "@/lib/utils";
+import { Avatar } from "@/components/Avatar";
+import { formatDate, renderStars } from "@/lib/utils";
 
 type RatingCardProps = {
   personId: string;
   personName: string;
   authorName: string;
   authorAvatarUrl: string | null;
+  authorAvatarLabel?: string | null;
   stars: number;
   text: string;
   createdAt: string;
   showPersonLink?: boolean;
   showAuthor?: boolean;
+  likeControl?: ReactNode;
   actions?: ReactNode;
 };
 
@@ -20,14 +23,15 @@ export function RatingCard({
   personName,
   authorName,
   authorAvatarUrl,
+  authorAvatarLabel,
   stars,
   text,
   createdAt,
   showPersonLink = true,
   showAuthor = true,
+  likeControl,
   actions
 }: RatingCardProps) {
-  const initials = getInitials(authorName);
   const comment = text.trim();
 
   return (
@@ -52,21 +56,18 @@ export function RatingCard({
       </div>
       {showAuthor ? (
         <div className="mt-4 flex items-center gap-3">
-          {authorAvatarUrl ? (
-            <img
-              src={authorAvatarUrl}
-              alt={`${authorName} avatar`}
-              className="h-8 w-8 rounded-full border border-line object-cover"
-            />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-zinc-900 text-xs font-semibold text-accent">
-              {initials}
-            </div>
-          )}
+          <Avatar
+            imageUrl={authorAvatarUrl}
+            label={authorAvatarLabel}
+            alt={`${authorName} avatar`}
+            sizeClassName="h-8 w-8"
+            textClassName="text-xs"
+          />
           <p className="text-sm font-medium text-zinc-200">{authorName}</p>
         </div>
       ) : null}
       {comment ? <p className="mt-4 text-zinc-300">{comment}</p> : null}
+      {likeControl ? <div className="mt-4">{likeControl}</div> : null}
       {actions ? <div className="mt-4">{actions}</div> : null}
     </article>
   );

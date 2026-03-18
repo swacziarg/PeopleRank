@@ -3,6 +3,8 @@ export type PersonSummary = {
   name: string;
   created_at: string;
   created_by: string;
+  description: string | null;
+  image_url: string | null;
 };
 
 export type PersonDetail = PersonSummary;
@@ -12,11 +14,13 @@ export type RankedPerson = {
   name: string;
   createdAt: string;
   avatarUrl: string | null;
+  description: string | null;
   ratingCount: number;
   commentCount: number;
   averageStars: number;
+  lowestStars: number | null;
   engagementScore: number;
-  rank: number;
+  rank: number | null;
 };
 
 export type FeedRating = {
@@ -26,7 +30,10 @@ export type FeedRating = {
   userId: string;
   authorName: string;
   authorAvatarUrl: string | null;
+  authorAvatarLabel: string | null;
   stars: number;
   text: string;
   createdAt: string;
+  likeCount: number;
+  likedByCurrentUser: boolean;
 };

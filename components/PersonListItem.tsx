@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { formatAverage, getInitials } from "@/lib/utils";
+import { Avatar } from "@/components/Avatar";
+import { formatAverage } from "@/lib/utils";
 import type { RankedPerson } from "@/types";
 
 type PersonListItemProps = {
@@ -11,28 +12,27 @@ export function PersonListItem({ person }: PersonListItemProps) {
     <li>
       <article className="flex flex-col gap-4 rounded-3xl border border-line bg-panel p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          {person.avatarUrl ? (
-            <img
-              src={person.avatarUrl}
-              alt={`${person.name} avatar`}
-              className="h-14 w-14 rounded-full border border-line object-cover"
-            />
-          ) : (
-            <div
-              aria-hidden="true"
-              className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-zinc-900 text-sm font-semibold text-accent"
-            >
-              {getInitials(person.name)}
-            </div>
-          )}
+          <Avatar
+            imageUrl={person.avatarUrl}
+            label={person.name}
+            alt={`${person.name} avatar`}
+            sizeClassName="h-14 w-14"
+            textClassName="text-sm"
+          />
 
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-semibold text-white">{person.name}</h2>
-              <span className="rounded-full border border-line bg-zinc-900 px-2.5 py-1 text-xs font-medium text-accent">
-                Rank #{person.rank}
-              </span>
+              {person.rank !== null ? (
+                <span className="rounded-full border border-line bg-zinc-900 px-2.5 py-1 text-xs font-medium text-accent">
+                  Rank #{person.rank}
+                </span>
+              ) : null}
             </div>
+
+            {person.description?.trim() ? (
+              <p className="max-w-2xl text-sm text-zinc-400">{person.description}</p>
+            ) : null}
 
             <div className="flex flex-wrap gap-2 text-sm text-zinc-300">
               <span className="rounded-full border border-line bg-zinc-900 px-3 py-1">
@@ -47,6 +47,11 @@ export function PersonListItem({ person }: PersonListItemProps) {
               <span className="rounded-full border border-line bg-zinc-900 px-3 py-1">
                 Avg {formatAverage(person.averageStars)}
               </span>
+              {person.lowestStars !== null ? (
+                <span className="rounded-full border border-line bg-zinc-900 px-3 py-1">
+                  Lowest: {person.lowestStars}★
+                </span>
+              ) : null}
             </div>
           </div>
         </div>

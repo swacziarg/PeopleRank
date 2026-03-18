@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PersonListItem } from "@/components/PersonListItem";
-import { fetchRankedPeoplePage, type RankedPeopleSort } from "@/lib/rankedPeople";
+import {
+  fetchRankedPeoplePage,
+  fetchSearchPeople,
+  type RankedPeopleSort
+} from "@/lib/rankedPeople";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 import type { RankedPerson } from "@/types";
 
@@ -18,6 +22,7 @@ const sortOptions: { label: string; value: RankedPeopleSort }[] = [
   { label: "Most rated", value: "most-rated" },
   { label: "Most commented", value: "most-commented" },
   { label: "Highest rated", value: "highest-rated" },
+  { label: "Lowest rated", value: "lowest-rated" },
   { label: "Newest", value: "newest" }
 ];
 
@@ -34,6 +39,8 @@ export function SearchPeople({
   const [results, setResults] = useState<RankedPerson[]>(initialPeople);
   const [page, setPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
+  const [similarPeople, setSimilarPeople] = useState<RankedPerson[]>([]);
+  const [hasExactMatches, setHasExactMatches] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -41,6 +48,8 @@ export function SearchPeople({
     setResults(initialPeople);
     setPage(initialPage);
     setTotalCount(initialTotalCount);
+    setSimilarPeople([]);
+    setHasExactMatches(true);
   }, [initialPage, initialPeople, initialTotalCount]);
 
   useEffect(() => {
@@ -66,22 +75,30 @@ export function SearchPeople({
       setError("");
 
       const supabase = getSupabaseBrowserClient();
-      const { people, totalCount: nextTotalCount } = await fetchRankedPeoplePage(
-        supabase,
-        {
-          page,
-          pageSize,
-          search: debouncedQuery || undefined,
-          sort
-        }
-      );
+      const nextResults = debouncedQuery
+        ? await fetchSearchPeople(supabase, {
+            pageSize,
+            query: debouncedQuery,
+            sort
+          })
+        : {
+            ...(await fetchRankedPeoplePage(supabase, {
+              page,
+              pageSize,
+              sort
+            })),
+            hasExactMatches: true,
+            similarPeople: []
+          };
 
       if (!isActive) {
         return;
       }
 
-      setResults(people);
-      setTotalCount(nextTotalCount);
+      setResults(nextResults.people);
+      setTotalCount(nextResults.totalCount);
+      setSimilarPeople(nextResults.similarPeople);
+      setHasExactMatches(nextResults.hasExactMatches);
       setLoading(false);
     };
 
@@ -105,6 +122,8 @@ export function SearchPeople({
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const trimmedQuery = query.trim();
+  const showingSimilarPeople =
+    debouncedQuery.length > 0 && !hasExactMatches && similarPeople.length > 0;
 
   return (
     <div className="space-y-6">
@@ -174,7 +193,9 @@ export function SearchPeople({
           <p className="text-sm text-zinc-400">
             {loading
               ? "Updating results..."
-              : `${totalCount} people found${totalCount > 0 ? ` · Page ${page} of ${totalPages}` : ""}`}
+              : showingSimilarPeople
+                ? `${similarPeople.length} similar people found`
+                : `${totalCount} people found${totalCount > 0 ? ` · Page ${page} of ${totalPages}` : ""}`}
           </p>
         )}
       </div>
@@ -191,7 +212,7 @@ export function SearchPeople({
           </div>
         ) : null}
 
-        {!loading && results.length === 0 && !error ? (
+        {!loading && results.length === 0 && !showingSimilarPeople && !error ? (
           <div className="p-8 text-center text-zinc-300">
             {debouncedQuery.length > 0
               ? "No matches yet. Use the add action to create a new page."
@@ -206,23 +227,37 @@ export function SearchPeople({
             ))}
           </ul>
         ) : null}
+
+        {!loading && showingSimilarPeople ? (
+          <div className="space-y-4 p-2">
+            <div className="rounded-2xl border border-line bg-zinc-950 px-4 py-3">
+              <p className="text-sm font-medium text-white">No exact matches</p>
+              <p className="mt-1 text-sm text-zinc-400">Similar people</p>
+            </div>
+            <ul className="grid gap-3">
+              {similarPeople.map((person) => (
+                <PersonListItem key={person.id} person={person} />
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
-          disabled={page <= 1 || loading}
+          disabled={page <= 1 || loading || debouncedQuery.length > 0}
           onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
           className="rounded-full border border-line bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Previous
         </button>
         <p className="text-sm text-zinc-400">
-          Page {page} of {totalPages}
+          {debouncedQuery.length > 0 ? "Search results" : `Page ${page} of ${totalPages}`}
         </p>
         <button
           type="button"
-          disabled={page >= totalPages || loading}
+          disabled={page >= totalPages || loading || debouncedQuery.length > 0}
           onClick={() => setPage((currentPage) => currentPage + 1)}
           className="rounded-full border border-line bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
         >

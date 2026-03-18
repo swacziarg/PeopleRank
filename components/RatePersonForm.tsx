@@ -101,6 +101,12 @@ export function RatePersonForm({
         user.user_metadata?.name ||
         user.email ||
         "Unknown user",
+      authorAvatarLabel:
+        user.user_metadata?.display_name ||
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.user_metadata?.username ||
+        null,
       authorAvatarUrl:
         typeof user.user_metadata?.avatar_url === "string"
           ? user.user_metadata.avatar_url
@@ -109,7 +115,9 @@ export function RatePersonForm({
             : null,
       stars: data.stars,
       text: data.text,
-      createdAt: data.created_at
+      createdAt: data.created_at,
+      likeCount: 0,
+      likedByCurrentUser: false
     };
 
     onSuccess?.(savedRating);
