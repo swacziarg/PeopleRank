@@ -1,52 +1,66 @@
 # PeopleRank
 
-PeopleRank is a satirical public rating app built with Next.js 14, Tailwind CSS, and Supabase. Users can browse public ratings, search and rank people by engagement, add new entries, and leave short 1 to 5 star reviews. Authenticated access is required for posting and for the profile area.
+PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious people ratings. Visitors can browse recent ratings and ranked people pages, while authenticated users can add people, post star ratings, edit their own ratings, and manage their profile.
 
-## Live App
-
-https://people-rank.vercel.app
-
-## Tech Stack
+## Stack
 
 - Next.js 14 App Router
 - TypeScript
 - Tailwind CSS
 - Supabase
-  - PostgreSQL
+  - Postgres
   - Auth
   - Row Level Security
 - Vercel
 
-## Features
-
-- Public home feed of recent ratings
-- Ranked search page with browseable people feed
-- Person detail page with average score and rating history
-- Protected add person flow with duplicate prevention
-- Protected rate person flow
-- Email/password login and sign up
-- Profile page with auth data, profile customization, and the user’s own ratings
-- Responsive navbar with accessible mobile menu
-
-## Pages
+## Routes
 
 - `/`: latest public ratings feed
-- `/search`: ranked people feed plus live search
-- `/person/[id]`: person details and ratings
+- `/search`: ranked people browser with live search, sort controls, and backend pagination
+- `/add`: protected add-person page
+- `/person/[id]`: person detail page with ratings and creator-owned delete action
 - `/rate/[id]`: protected rating form
-- `/add`: protected form for creating a person
-- `/login`: email/password login and sign up
-- `/profile`: protected user account page
+- `/profile`: protected account page with profile editing and rating management
+- `/login`: email/password sign in and sign up
 - `/about`: static app description
 
-## Authentication Flow
+## Current UX
 
-- Supabase Auth handles email/password authentication.
-- Middleware protects `/add`, `/rate/*`, and `/profile`.
-- Unauthenticated users are redirected to `/login?next=...`.
-- Authenticated users visiting `/login` are redirected to `/profile`.
-- After successful login, users are redirected to the requested protected page or to `/profile`.
-- Sign up uses Supabase Auth directly. If email confirmation is enabled in Supabase, users must confirm their email before logging in.
+- Fixed top navbar with one shared desktop/mobile navigation.
+- Navbar links: `Home`, `Search`, `Add`, `About`, plus `Profile` when signed in or `Login` when signed out.
+- Profile actions live under the 3-dot menu.
+- Search pagination shows exactly 8 people per page.
+- Search pagination is backend-limited. The app does not fetch the full people list and paginate in the client.
+- Add flow surfaces up to 5 possible matches while typing.
+- Exact duplicates are blocked by normalized-name matching.
+- After a successful add, the app redirects to the created person page.
+- Ratings support:
+  - stars only
+  - stars plus comment
+- Blank comments are hidden in the UI. Ratings with no comment show stars and metadata only.
+- On the profile page, the user’s own ratings do not repeat the author block.
+- Ratings can be edited or deleted only by their author.
+- People can be deleted only by the user who created them.
+
+## Auth Flow
+
+- Supabase Auth handles email/password login and sign up.
+- Middleware protects `/add`, `/profile`, and `/rate/[id]`.
+- Unauthenticated access to protected routes redirects to `/login?next=...`.
+- Visiting `/login` while authenticated redirects to `/profile`.
+- Sign up creates a Supabase auth user and attempts to upsert a `profiles` row immediately.
+- If email confirmation is enabled in Supabase, a new user may need to confirm email before logging in.
+
+## Profile Fields
+
+The profile UI currently supports:
+
+- `username`
+- `display_name`
+- `bio`
+- `avatar_url`
+
+`username` is created at sign up and used as a fallback display value if `display_name` is empty.
 
 ## Environment Variables
 
@@ -54,28 +68,28 @@ Create `.env.local`:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-publishable-key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-publishable-anon-key
 ```
 
 ## Local Development
 
-1. Install dependencies:
-
 ```bash
 npm install
-```
-
-2. Run the app:
-
-```bash
 npm run dev
 ```
 
-3. Open `http://localhost:3000`
+Open `http://localhost:3000`.
 
-## Supabase Setup
+Useful checks:
 
-Run this SQL in the Supabase SQL editor:
+```bash
+npm run typecheck
+npm run build
+```
+
+## Supabase Schema
+
+Run this SQL in the Supabase SQL editor for a fresh setup.
 
 ```sql
 create extension if not exists "pgcrypto";
@@ -105,7 +119,7 @@ create table if not exists public.ratings (
   user_id uuid not null references auth.users(id) on delete cascade,
   person_id uuid not null references public.people(id) on delete cascade,
   stars int not null check (stars between 1 and 5),
-  text varchar(200) not null,
+  text varchar(200) not null default '',
   created_at timestamptz not null default timezone('utc', now())
 );
 
@@ -119,7 +133,11 @@ create index if not exists ratings_user_id_idx
 on public.ratings (user_id);
 ```
 
-If the `people` table already exists, add the duplicate guard like this:
+## Required SQL Changes For Existing Projects
+
+If your existing database predates the current app behavior, make sure these changes are in place.
+
+### 1. Duplicate detection
 
 ```sql
 alter table public.people
@@ -131,26 +149,131 @@ create unique index if not exists people_normalized_name_key
 on public.people (normalized_name);
 ```
 
-If the `profiles` table already exists, add the profile customization columns like this:
+### 2. Profile customization fields
 
 ```sql
 alter table public.profiles
 add column if not exists display_name text;
 
 alter table public.profiles
-add column if not exists bio text;
+add column if not exists bio text default '';
 
 alter table public.profiles
 add column if not exists avatar_url text;
 ```
 
-Enable Row Level Security:
+### 3. Optional comments
+
+The app allows star-only ratings. Empty comments must be accepted.
+
+```sql
+alter table public.ratings
+alter column text set default '';
+```
+
+If you previously added a check constraint that rejects blank comments, drop it. Example:
+
+```sql
+alter table public.ratings
+drop constraint if exists ratings_text_check;
+```
+
+## Ranked Pagination Function
+
+`/search` depends on this SQL function so every page returns only the requested 8 records from the backend.
+
+```sql
+create or replace function public.get_ranked_people_page(
+  page_number integer default 1,
+  page_size integer default 8,
+  search_term text default null,
+  sort_by text default 'most-rated'
+)
+returns table (
+  id uuid,
+  name text,
+  created_at timestamptz,
+  rating_count bigint,
+  comment_count bigint,
+  average_stars numeric,
+  engagement_score bigint,
+  rank bigint,
+  total_count bigint
+)
+language sql
+stable
+as $$
+  with people_with_stats as (
+    select
+      p.id,
+      p.name,
+      p.created_at,
+      count(r.id)::bigint as rating_count,
+      count(r.id) filter (
+        where nullif(trim(coalesce(r.text, '')), '') is not null
+      )::bigint as comment_count,
+      coalesce(avg(r.stars), 0)::numeric as average_stars,
+      (
+        count(r.id) +
+        count(r.id) filter (
+          where nullif(trim(coalesce(r.text, '')), '') is not null
+        )
+      )::bigint as engagement_score
+    from public.people p
+    left join public.ratings r on r.person_id = p.id
+    where
+      search_term is null
+      or p.name ilike '%' || search_term || '%'
+    group by p.id, p.name, p.created_at
+  ),
+  ranked as (
+    select
+      *,
+      row_number() over (
+        order by
+          case when sort_by = 'highest-rated' then average_stars end desc,
+          case when sort_by = 'newest' then created_at end desc,
+          case when sort_by = 'most-commented' then comment_count end desc,
+          case when sort_by = 'most-rated' then rating_count end desc,
+          rating_count desc,
+          comment_count desc,
+          average_stars desc,
+          created_at desc,
+          name asc
+      )::bigint as rank,
+      count(*) over ()::bigint as total_count
+    from people_with_stats
+  )
+  select
+    id,
+    name,
+    created_at,
+    rating_count,
+    comment_count,
+    average_stars,
+    engagement_score,
+    rank,
+    total_count
+  from ranked
+  order by rank
+  offset greatest(page_number - 1, 0) * greatest(page_size, 1)
+  limit greatest(page_size, 1);
+$$;
+```
+
+## RLS Policies
+
+Enable RLS:
 
 ```sql
 alter table public.profiles enable row level security;
 alter table public.people enable row level security;
 alter table public.ratings enable row level security;
+```
 
+Policies:
+
+```sql
 create policy "profiles are publicly readable"
 on public.profiles
 for select
@@ -166,11 +289,36 @@ on public.ratings
 for select
 using (true);
 
+create policy "users can insert their own profile row"
+on public.profiles
+for insert
+to authenticated
+with check (auth.uid() = id);
+
+create policy "users can update their own profile row"
+on public.profiles
+for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);
+
+create policy "users can delete their own profile row"
+on public.profiles
+for delete
+to authenticated
+using (auth.uid() = id);
+
 create policy "authenticated users can insert people"
 on public.people
 for insert
 to authenticated
 with check (auth.uid() = created_by);
+
+create policy "users can delete their own people"
+on public.people
+for delete
+to authenticated
+using (auth.uid() = created_by);
 
 create policy "authenticated users can insert ratings"
 on public.ratings
@@ -190,44 +338,20 @@ on public.ratings
 for delete
 to authenticated
 using (auth.uid() = user_id);
-
-create policy "users can view their own profile row"
-on public.profiles
-for select
-to authenticated
-using (auth.uid() = id);
-
-create policy "users can insert their own profile row"
-on public.profiles
-for insert
-to authenticated
-with check (auth.uid() = id);
-
-create policy "users can update their own profile row"
-on public.profiles
-for update
-to authenticated
-using (auth.uid() = id)
-with check (auth.uid() = id);
 ```
 
 ## Deployment
 
-The app is deployed on Vercel:
-
-https://people-rank.vercel.app
-
-To deploy your own copy:
+The intended deployment target is Vercel.
 
 1. Create a Supabase project.
-2. Run the schema and RLS SQL above.
-3. Add the environment variables in Vercel.
-4. Import the repo into Vercel.
+2. Run the schema, pagination function, and RLS SQL above.
+3. Add the two public Supabase environment variables in Vercel.
+4. Import the repository into Vercel.
 5. Deploy.
 
-## Profile Customization
+## Notes
 
-- Users can update their display name, bio, and avatar URL from `/profile`.
-- Avatars use external image URLs only.
-- If no avatar URL is set, the UI falls back to initials.
-- No uploads or Supabase Storage are required.
+- Author display is shown on public rating cards where it belongs, but hidden on the profile page for the current user’s own ratings.
+- No file uploads or Supabase Storage are required.
+- The UI is intentionally flat and minimal. No gradients or glass effects are part of the design.

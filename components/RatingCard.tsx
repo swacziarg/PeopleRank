@@ -28,6 +28,7 @@ export function RatingCard({
   actions
 }: RatingCardProps) {
   const initials = getInitials(authorName);
+  const comment = text.trim();
 
   return (
     <article className="rounded-3xl border border-line bg-panel p-5">
@@ -65,7 +66,7 @@ export function RatingCard({
           <p className="text-sm font-medium text-zinc-200">{authorName}</p>
         </div>
       ) : null}
-      <p className="mt-4 text-zinc-300">{text}</p>
+      {comment ? <p className="mt-4 text-zinc-300">{comment}</p> : null}
       {actions ? <div className="mt-4">{actions}</div> : null}
     </article>
   );

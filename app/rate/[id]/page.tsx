@@ -35,8 +35,8 @@ export default async function RatePage({ params }: RatePageProps) {
           Rate {person.name}
         </h1>
         <p className="max-w-2xl text-zinc-400">
-          Leave a public star rating and a short line. Keep it funny, brief, and
-          under 200 characters.
+          Leave a public star rating, with or without a short line. Keep any
+          comment funny, brief, and under 200 characters.
         </p>
       </div>
       <RatePersonForm personId={person.id} personName={person.name} />

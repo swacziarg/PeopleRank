@@ -9,6 +9,7 @@ import { SignOutButton } from "@/components/SignOutButton";
 const baseLinks = [
   { href: "/", label: "Home" },
   { href: "/search", label: "Search" },
+  { href: "/add", label: "Add" },
   { href: "/about", label: "About" }
 ] as const;
 

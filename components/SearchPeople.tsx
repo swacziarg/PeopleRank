@@ -160,7 +160,7 @@ export function SearchPeople({
         </div>
 
         <p className="mt-3 text-sm text-zinc-400">
-          Browse 20 people per page and jump to add flow when the right name is
+          Browse 8 people per page and jump to add flow when the right name is
           missing.
         </p>
       </div>

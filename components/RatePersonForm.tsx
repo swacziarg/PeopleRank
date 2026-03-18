@@ -58,9 +58,10 @@ export function RatePersonForm({
     }
 
     setSubmitting(true);
+    const trimmedText = text.trim();
     const payload = {
       stars,
-      text: text.trim()
+      text: trimmedText
     };
 
     const query = ratingId
@@ -137,12 +138,11 @@ export function RatePersonForm({
 
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-zinc-200">
-            Your review for {personName}
+            Comment for {personName} <span className="text-zinc-500">(optional)</span>
           </span>
           <textarea
             value={text}
             onChange={(event) => setText(event.target.value)}
-            required
             maxLength={200}
             rows={4}
             placeholder="Competent under pressure, suspiciously bad at parking."

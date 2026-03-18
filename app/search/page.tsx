@@ -8,7 +8,7 @@ type SearchPageProps = {
   };
 };
 
-const pageSize = 20;
+const pageSize = 8;
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const page = Math.max(1, Number(searchParams?.page ?? "1") || 1);

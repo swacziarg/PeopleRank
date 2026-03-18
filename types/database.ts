@@ -107,7 +107,27 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      get_ranked_people_page: {
+        Args: {
+          page_number?: number;
+          page_size?: number;
+          search_term?: string | null;
+          sort_by?: string;
+        };
+        Returns: {
+          average_stars: number;
+          comment_count: number;
+          created_at: string;
+          engagement_score: number;
+          id: string;
+          name: string;
+          rank: number;
+          rating_count: number;
+          total_count: number;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

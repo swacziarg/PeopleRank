@@ -30,5 +30,3 @@ export type FeedRating = {
   text: string;
   createdAt: string;
 };
-
-export type UserRatingSummary = FeedRating;
