@@ -9,6 +9,15 @@ export type PersonSummary = {
 
 export type PersonDetail = PersonSummary;
 
+export type PublicProfile = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  created_at: string;
+};
+
 export type RankedPerson = {
   id: string;
   name: string;

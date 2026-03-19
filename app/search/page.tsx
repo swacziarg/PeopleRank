@@ -40,13 +40,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <section className="space-y-6 py-8 sm:py-10">
       <div className="space-y-3 rounded-3xl border border-line bg-panel p-6 sm:p-8">
-        <p className="text-sm uppercase tracking-[0.3em] text-accent">Search</p>
-        <h1 className="text-3xl font-semibold text-white">
-          Search and browse ranked people
-        </h1>
+        <h1 className="text-3xl font-semibold text-white">Leaderboard</h1>
         <p className="max-w-2xl text-zinc-400">
-          Browse the most engaged profiles, move page by page, or jump into the
-          add flow with the current search term.
+          Browse ranked people by engagement.
         </p>
       </div>
       <SearchPeople

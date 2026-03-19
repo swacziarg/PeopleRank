@@ -2,12 +2,13 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { ShareButton } from "@/components/ShareButton";
-import { formatDate, renderStars } from "@/lib/utils";
+import { formatDate, getProfileHref, renderStars } from "@/lib/utils";
 
 type RatingCardProps = {
   ratingId?: string;
   personId: string;
   personName: string;
+  authorId: string;
   authorName: string;
   authorAvatarUrl: string | null;
   authorAvatarLabel?: string | null;
@@ -16,6 +17,7 @@ type RatingCardProps = {
   createdAt: string;
   showPersonLink?: boolean;
   showAuthor?: boolean;
+  currentUserId?: string | null;
   likeControl?: ReactNode;
   actions?: ReactNode;
 };
@@ -24,6 +26,7 @@ export function RatingCard({
   ratingId,
   personId,
   personName,
+  authorId,
   authorName,
   authorAvatarUrl,
   authorAvatarLabel,
@@ -32,10 +35,12 @@ export function RatingCard({
   createdAt,
   showPersonLink = true,
   showAuthor = true,
+  currentUserId,
   likeControl,
   actions
 }: RatingCardProps) {
   const comment = text.trim();
+  const authorHref = getProfileHref(authorId, currentUserId);
 
   return (
     <article
@@ -72,14 +77,21 @@ export function RatingCard({
       </div>
       {showAuthor ? (
         <div className="mt-4 flex items-center gap-3">
-          <Avatar
-            imageUrl={authorAvatarUrl}
-            label={authorAvatarLabel}
-            alt={`${authorName} avatar`}
-            sizeClassName="h-8 w-8"
-            textClassName="text-xs"
-          />
-          <p className="text-sm font-medium text-zinc-200">{authorName}</p>
+          <Link href={authorHref} className="shrink-0">
+            <Avatar
+              imageUrl={authorAvatarUrl}
+              label={authorAvatarLabel}
+              alt={`${authorName} avatar`}
+              sizeClassName="h-8 w-8"
+              textClassName="text-xs"
+            />
+          </Link>
+          <Link
+            href={authorHref}
+            className="text-sm font-medium text-zinc-200 transition-colors hover:text-white"
+          >
+            {authorName}
+          </Link>
         </div>
       ) : null}
       {comment ? <p className="mt-4 text-zinc-300">{comment}</p> : null}

@@ -16,11 +16,12 @@ PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious pe
 ## Routes
 
 - `/`: latest public ratings feed
-- `/search`: ranked people browser with live search, sort controls, and backend pagination
+- `/search`: leaderboard-style ranked people browser with live search, sort controls, and backend pagination
 - `/add`: protected add-person page
 - `/person/[id]`: person detail page with ratings, a rating-over-time graph, rating votes, threaded comments, and creator-owned edit/delete actions
 - `/rate/[id]`: protected rating form
 - `/profile`: protected account page with profile editing and rating management
+- `/profile/[id]`: public user profile with avatar, display name, bio, join date, and public ratings
 - `/login`: email/password sign in and sign up
 - `/about`: static app description
 
@@ -34,6 +35,7 @@ PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious pe
 - Search pagination is backend-limited. The app does not fetch the full people list and paginate in the client.
 - Search first looks for exact person-name matches and falls back to similar matches when nothing exact is found.
 - Search includes an `Added by you` toggle that keeps the same sort and pagination flow.
+- Search includes a `Leaderboard` heading with the subtext `Browse ranked people by engagement`.
 - Add flow surfaces up to 5 possible matches while typing.
 - Exact duplicates are blocked by normalized-name matching.
 - After a successful add, the app redirects to the created person page.
@@ -48,6 +50,7 @@ PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious pe
 - Blank comments are hidden in the UI. Ratings with no comment show stars and metadata only.
 - On the profile page, the user’s own ratings do not repeat the author block.
 - Ratings can be edited or deleted only by their author.
+- Clicking a rating or comment author name opens that user’s profile at `/profile/[id]`; clicking your own name routes to `/profile`.
 - Search cards display lowest rating when ratings exist.
 - Search sort options include `Lowest rated`.
 - Ratings support per-rating upvotes and downvotes with toggle-to-remove behavior.

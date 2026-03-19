@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, type ReactNode, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
@@ -8,7 +9,7 @@ import {
   getAuthenticatedUser,
   getDisplayNameFallback
 } from "@/lib/authProfile";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getProfileHref } from "@/lib/utils";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 type RatingLikeButtonProps = {
@@ -108,20 +109,28 @@ function CommentItem({
   children?: ReactNode;
 }) {
   const isOwner = currentUserId === comment.userId;
+  const authorHref = getProfileHref(comment.userId, currentUserId);
 
   return (
     <div className="space-y-3 rounded-2xl border border-line bg-zinc-950 p-3">
       <div className="flex items-start gap-3">
-        <Avatar
-          imageUrl={comment.authorAvatarUrl}
-          label={comment.authorAvatarLabel}
-          alt={`${comment.authorName} avatar`}
-          sizeClassName="h-8 w-8"
-          textClassName="text-xs"
-        />
+        <Link href={authorHref} className="shrink-0">
+          <Avatar
+            imageUrl={comment.authorAvatarUrl}
+            label={comment.authorAvatarLabel}
+            alt={`${comment.authorName} avatar`}
+            sizeClassName="h-8 w-8"
+            textClassName="text-xs"
+          />
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-            <span className="font-medium text-zinc-100">{comment.authorName}</span>
+            <Link
+              href={authorHref}
+              className="font-medium text-zinc-100 transition-colors hover:text-white"
+            >
+              {comment.authorName}
+            </Link>
             <span className="text-zinc-500">{formatDate(comment.createdAt)}</span>
           </div>
           <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-300">{comment.text}</p>

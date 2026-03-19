@@ -50,3 +50,7 @@ export function resolveAvatarLabel(...values: Array<string | null | undefined>) 
 
   return "?";
 }
+
+export function getProfileHref(profileId: string, currentUserId?: string | null) {
+  return currentUserId === profileId ? "/profile" : `/profile/${profileId}`;
+}

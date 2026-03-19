@@ -5,7 +5,7 @@ import {
   type RankedPeoplePageResult,
   type RankedPeopleSort
 } from "@/lib/rankedPeople";
-import type { FeedRating, PersonDetail } from "@/types";
+import type { FeedRating, PersonDetail, PublicProfile } from "@/types";
 
 type ProfileSummary = {
   display_name: string | null;
@@ -283,6 +283,21 @@ export async function getPersonById(id: string): Promise<PersonDetail | null> {
     .select("id, name, created_at, created_by, description, image_url")
     .eq("id", id)
     .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data;
+}
+
+export async function getProfileById(id: string): Promise<PublicProfile | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, bio, avatar_url, created_at")
+    .eq("id", id)
+    .maybeSingle();
 
   if (error || !data) {
     return null;

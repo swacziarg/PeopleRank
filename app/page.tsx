@@ -74,12 +74,14 @@ export default async function HomePage() {
                 ratingId={rating.id}
                 personId={rating.personId}
                 personName={rating.personName}
+                authorId={rating.userId}
                 authorName={rating.authorName}
                 authorAvatarUrl={rating.authorAvatarUrl}
                 authorAvatarLabel={rating.authorAvatarLabel}
                 stars={rating.stars}
                 text={rating.text}
                 createdAt={rating.createdAt}
+                currentUserId={user?.id ?? null}
                 likeControl={
                   <RatingLikeButton
                     ratingId={rating.id}

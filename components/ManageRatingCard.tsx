@@ -95,6 +95,7 @@ export function ManageRatingCard({
       ratingId={currentRating.id}
       personId={currentRating.personId}
       personName={currentRating.personName}
+      authorId={currentRating.userId}
       authorName={currentRating.authorName}
       authorAvatarUrl={currentRating.authorAvatarUrl}
       authorAvatarLabel={currentRating.authorAvatarLabel}
@@ -103,6 +104,7 @@ export function ManageRatingCard({
       createdAt={currentRating.createdAt}
       showPersonLink={showPersonLink}
       showAuthor={showAuthor}
+      currentUserId={currentUserId}
       likeControl={
         <RatingLikeButton
           ratingId={currentRating.id}
