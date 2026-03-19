@@ -18,7 +18,7 @@ PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious pe
 - `/`: latest public ratings feed
 - `/search`: ranked people browser with live search, sort controls, and backend pagination
 - `/add`: protected add-person page
-- `/person/[id]`: person detail page with ratings, a rating-over-time graph, rating likes, and creator-owned edit/delete actions
+- `/person/[id]`: person detail page with ratings, a rating-over-time graph, rating votes, threaded comments, and creator-owned edit/delete actions
 - `/rate/[id]`: protected rating form
 - `/profile`: protected account page with profile editing and rating management
 - `/login`: email/password sign in and sign up
@@ -50,7 +50,8 @@ PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious pe
 - Ratings can be edited or deleted only by their author.
 - Search cards display lowest rating when ratings exist.
 - Search sort options include `Lowest rated`.
-- Ratings with comments can be liked. Star-only ratings never show like controls.
+- Ratings support per-rating upvotes and downvotes with toggle-to-remove behavior.
+- Ratings support threaded comments with one reply level, lazy-loaded only when the comments panel is opened.
 - Person pages show a lightweight SVG graph when at least two rating history buckets exist.
 - Share buttons support copying or native sharing for person pages and individual rating deep links.
 
@@ -143,11 +144,21 @@ create table if not exists public.ratings (
   created_at timestamptz not null default timezone('utc', now())
 );
 
-create table if not exists public.rating_likes (
+create table if not exists public.rating_votes (
   user_id uuid references auth.users(id) on delete cascade,
   rating_id uuid references public.ratings(id) on delete cascade,
+  value int check (value in (1, -1)),
   created_at timestamptz default now(),
   primary key (user_id, rating_id)
+);
+
+create table if not exists public.rating_comments (
+  id uuid primary key default gen_random_uuid(),
+  rating_id uuid references public.ratings(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  parent_id uuid references public.rating_comments(id) on delete cascade,
+  text varchar(300) not null,
+  created_at timestamptz default now()
 );
 
 create index if not exists people_name_idx
@@ -158,6 +169,15 @@ on public.ratings (person_id);
 
 create index if not exists ratings_user_id_idx
 on public.ratings (user_id);
+
+create index if not exists rating_votes_rating_id_idx
+on public.rating_votes (rating_id);
+
+create index if not exists rating_comments_rating_id_idx
+on public.rating_comments (rating_id);
+
+create index if not exists rating_comments_parent_id_idx
+on public.rating_comments (parent_id);
 ```
 
 ## Required SQL Changes For Existing Projects
@@ -213,16 +233,38 @@ add column if not exists description text,
 add column if not exists image_url text;
 ```
 
-### 5. Rating likes
+### 5. Rating votes and threaded comments
 
 ```sql
-create table if not exists public.rating_likes (
+drop table if exists public.rating_likes;
+
+create table if not exists public.rating_votes (
   user_id uuid references auth.users(id) on delete cascade,
   rating_id uuid references public.ratings(id) on delete cascade,
+  value int check (value in (1, -1)),
   created_at timestamptz default now(),
   primary key (user_id, rating_id)
 );
+
+create table if not exists public.rating_comments (
+  id uuid primary key default gen_random_uuid(),
+  rating_id uuid references public.ratings(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  parent_id uuid references public.rating_comments(id) on delete cascade,
+  text varchar(300) not null,
+  created_at timestamptz default now()
+);
 ```
+
+Behavior:
+
+- Upvote stores `value = 1`.
+- Downvote stores `value = -1`.
+- Clicking the same vote again removes the user’s vote.
+- Only one vote per user per rating is allowed.
+- Top-level comments use `parent_id is null`.
+- Replies use `parent_id = top_level_comment.id`.
+- Reply nesting is limited to one level.
 
 ## Ranked Pagination Function
 
@@ -332,7 +374,8 @@ Enable RLS:
 alter table public.profiles enable row level security;
 alter table public.people enable row level security;
 alter table public.ratings enable row level security;
-alter table public.rating_likes enable row level security;
+alter table public.rating_votes enable row level security;
+alter table public.rating_comments enable row level security;
 ```
 
 Policies:
@@ -353,8 +396,13 @@ on public.ratings
 for select
 using (true);
 
-create policy "likes are readable"
-on public.rating_likes
+create policy "votes readable"
+on public.rating_votes
+for select
+using (true);
+
+create policy "comments readable"
+on public.rating_comments
 for select
 using (true);
 
@@ -415,22 +463,45 @@ for delete
 to authenticated
 using (auth.uid() = user_id);
 
-create policy "users can like ratings"
-on public.rating_likes
+create policy "users can vote"
+on public.rating_votes
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "users can update votes"
+on public.rating_votes
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create policy "users can remove votes"
+on public.rating_votes
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "users can comment"
+on public.rating_comments
 for insert
 to authenticated
 with check (
   auth.uid() = user_id
-  and exists (
-    select 1
-    from public.ratings
-    where ratings.id = rating_likes.rating_id
-      and nullif(trim(coalesce(ratings.text, '')), '') is not null
+  and (
+    parent_id is null
+    or exists (
+      select 1
+      from public.rating_comments parent
+      where parent.id = rating_comments.parent_id
+        and parent.parent_id is null
+        and parent.rating_id = rating_comments.rating_id
+    )
   )
 );
 
-create policy "users can unlike ratings"
-on public.rating_likes
+create policy "users can delete own comments"
+on public.rating_comments
 for delete
 to authenticated
 using (auth.uid() = user_id);

@@ -73,8 +73,9 @@ export function ManageRatingCard({
           onSuccess={(updatedRating) => {
             setCurrentRating((previousRating) => ({
               ...updatedRating,
-              likeCount: previousRating.likeCount,
-              likedByCurrentUser: previousRating.likedByCurrentUser
+              voteScore: previousRating.voteScore,
+              currentUserVote: previousRating.currentUserVote,
+              commentCount: previousRating.commentCount
             }));
             setIsEditing(false);
             router.refresh();
@@ -105,9 +106,9 @@ export function ManageRatingCard({
       likeControl={
         <RatingLikeButton
           ratingId={currentRating.id}
-          initialLikeCount={currentRating.likeCount}
-          initialLiked={currentRating.likedByCurrentUser}
-          text={currentRating.text}
+          initialVoteScore={currentRating.voteScore}
+          initialUserVote={currentRating.currentUserVote}
+          initialCommentCount={currentRating.commentCount}
         />
       }
       actions={

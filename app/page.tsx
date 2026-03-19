@@ -83,9 +83,9 @@ export default async function HomePage() {
                 likeControl={
                   <RatingLikeButton
                     ratingId={rating.id}
-                    initialLikeCount={rating.likeCount}
-                    initialLiked={rating.likedByCurrentUser}
-                    text={rating.text}
+                    initialVoteScore={rating.voteScore}
+                    initialUserVote={rating.currentUserVote}
+                    initialCommentCount={rating.commentCount}
                   />
                 }
               />

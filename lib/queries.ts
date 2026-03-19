@@ -38,53 +38,89 @@ type PersonRatingRow = {
   profiles: ProfileSummary | null;
 };
 
-type RatingLikeMaps = {
-  likedRatingIds: Set<string>;
-  likeCountByRatingId: Map<string, number>;
+type RatingVoteMaps = {
+  currentUserVoteByRatingId: Map<string, -1 | 1>;
+  voteScoreByRatingId: Map<string, number>;
 };
 
-async function getRatingLikeMaps(
+type RatingCommentCounts = Map<string, number>;
+
+async function getRatingVoteMaps(
   ratingIds: string[],
   currentUserId?: string | null
-): Promise<RatingLikeMaps> {
+): Promise<RatingVoteMaps> {
   if (ratingIds.length === 0) {
     return {
-      likedRatingIds: new Set<string>(),
-      likeCountByRatingId: new Map<string, number>()
+      currentUserVoteByRatingId: new Map<string, -1 | 1>(),
+      voteScoreByRatingId: new Map<string, number>()
     };
   }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
-    .from("rating_likes")
-    .select("rating_id, user_id")
+    .from("rating_votes")
+    .select("rating_id, user_id, value")
     .in("rating_id", ratingIds);
 
   if (error || !data) {
     return {
-      likedRatingIds: new Set<string>(),
-      likeCountByRatingId: new Map<string, number>()
+      currentUserVoteByRatingId: new Map<string, -1 | 1>(),
+      voteScoreByRatingId: new Map<string, number>()
     };
   }
 
-  const likedRatingIds = new Set<string>();
-  const likeCountByRatingId = new Map<string, number>();
+  const currentUserVoteByRatingId = new Map<string, -1 | 1>();
+  const voteScoreByRatingId = new Map<string, number>();
 
-  for (const like of data) {
-    likeCountByRatingId.set(
-      like.rating_id,
-      (likeCountByRatingId.get(like.rating_id) ?? 0) + 1
+  for (const vote of data) {
+    voteScoreByRatingId.set(
+      vote.rating_id,
+      (voteScoreByRatingId.get(vote.rating_id) ?? 0) + vote.value
     );
 
-    if (currentUserId && like.user_id === currentUserId) {
-      likedRatingIds.add(like.rating_id);
+    if (
+      currentUserId &&
+      vote.user_id === currentUserId &&
+      (vote.value === 1 || vote.value === -1)
+    ) {
+      currentUserVoteByRatingId.set(vote.rating_id, vote.value);
     }
   }
 
   return {
-    likedRatingIds,
-    likeCountByRatingId
+    currentUserVoteByRatingId,
+    voteScoreByRatingId
   };
+}
+
+async function getRatingCommentCounts(
+  ratingIds: string[]
+): Promise<RatingCommentCounts> {
+  if (ratingIds.length === 0) {
+    return new Map<string, number>();
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("rating_comments")
+    .select("rating_id")
+    .in("rating_id", ratingIds);
+
+  if (error || !data) {
+    return new Map<string, number>();
+  }
+
+  const counts = new Map<string, number>();
+
+  for (const comment of data) {
+    if (!comment.rating_id) {
+      continue;
+    }
+
+    counts.set(comment.rating_id, (counts.get(comment.rating_id) ?? 0) + 1);
+  }
+
+  return counts;
 }
 
 function toFeedRating(
@@ -99,13 +135,15 @@ function toFeedRating(
   {
     personId,
     personName,
-    likedRatingIds,
-    likeCountByRatingId
+    currentUserVoteByRatingId,
+    voteScoreByRatingId,
+    commentCountByRatingId
   }: {
     personId: string;
     personName: string;
-    likedRatingIds: Set<string>;
-    likeCountByRatingId: Map<string, number>;
+    currentUserVoteByRatingId: Map<string, -1 | 1>;
+    voteScoreByRatingId: Map<string, number>;
+    commentCountByRatingId: RatingCommentCounts;
   }
 ): FeedRating {
   const authorName = getDisplayNameFallback(
@@ -127,8 +165,9 @@ function toFeedRating(
     createdAt: item.created_at,
     personId,
     personName,
-    likeCount: likeCountByRatingId.get(item.id) ?? 0,
-    likedByCurrentUser: likedRatingIds.has(item.id)
+    voteScore: voteScoreByRatingId.get(item.id) ?? 0,
+    currentUserVote: currentUserVoteByRatingId.get(item.id) ?? 0,
+    commentCount: commentCountByRatingId.get(item.id) ?? 0
   };
 }
 
@@ -150,17 +189,19 @@ export async function getLatestRatings(
   }
 
   const ratingRows = data as LatestRatingRow[];
-  const { likedRatingIds, likeCountByRatingId } = await getRatingLikeMaps(
-    ratingRows.map((item) => item.id),
-    currentUserId
-  );
+  const ratingIds = ratingRows.map((item) => item.id);
+  const [voteMaps, commentCountByRatingId] = await Promise.all([
+    getRatingVoteMaps(ratingIds, currentUserId),
+    getRatingCommentCounts(ratingIds)
+  ]);
 
   return ratingRows.map((item) =>
     toFeedRating(item, {
       personId: item.people.id,
       personName: item.people.name,
-      likedRatingIds,
-      likeCountByRatingId
+      currentUserVoteByRatingId: voteMaps.currentUserVoteByRatingId,
+      voteScoreByRatingId: voteMaps.voteScoreByRatingId,
+      commentCountByRatingId
     })
   );
 }
@@ -183,17 +224,19 @@ export async function getRatingsForPerson(
   }
 
   const ratingRows = data as PersonRatingRow[];
-  const { likedRatingIds, likeCountByRatingId } = await getRatingLikeMaps(
-    ratingRows.map((item) => item.id),
-    currentUserId
-  );
+  const ratingIds = ratingRows.map((item) => item.id);
+  const [voteMaps, commentCountByRatingId] = await Promise.all([
+    getRatingVoteMaps(ratingIds, currentUserId),
+    getRatingCommentCounts(ratingIds)
+  ]);
 
   return ratingRows.map((item) =>
     toFeedRating(item, {
       personId,
       personName: item.people.name,
-      likedRatingIds,
-      likeCountByRatingId
+      currentUserVoteByRatingId: voteMaps.currentUserVoteByRatingId,
+      voteScoreByRatingId: voteMaps.voteScoreByRatingId,
+      commentCountByRatingId
     })
   );
 }
@@ -216,17 +259,19 @@ export async function getRatingsByUser(
   }
 
   const ratingRows = data as LatestRatingRow[];
-  const { likedRatingIds, likeCountByRatingId } = await getRatingLikeMaps(
-    ratingRows.map((item) => item.id),
-    currentUserId
-  );
+  const ratingIds = ratingRows.map((item) => item.id);
+  const [voteMaps, commentCountByRatingId] = await Promise.all([
+    getRatingVoteMaps(ratingIds, currentUserId),
+    getRatingCommentCounts(ratingIds)
+  ]);
 
   return ratingRows.map((item) =>
     toFeedRating(item, {
       personId: item.people.id,
       personName: item.people.name,
-      likedRatingIds,
-      likeCountByRatingId
+      currentUserVoteByRatingId: voteMaps.currentUserVoteByRatingId,
+      voteScoreByRatingId: voteMaps.voteScoreByRatingId,
+      commentCountByRatingId
     })
   );
 }

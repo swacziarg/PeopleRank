@@ -35,6 +35,7 @@ export type FeedRating = {
   stars: number;
   text: string;
   createdAt: string;
-  likeCount: number;
-  likedByCurrentUser: boolean;
+  voteScore: number;
+  currentUserVote: -1 | 0 | 1;
+  commentCount: number;
 };

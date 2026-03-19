@@ -71,6 +71,86 @@ export type Database = {
         };
         Relationships: [];
       };
+      rating_comments: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          parent_id: string | null;
+          rating_id: string | null;
+          text: string;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          parent_id?: string | null;
+          rating_id?: string | null;
+          text: string;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          parent_id?: string | null;
+          rating_id?: string | null;
+          text?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rating_comments_parent_id_fkey";
+            columns: ["parent_id"];
+            referencedRelation: "rating_comments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "rating_comments_rating_id_fkey";
+            columns: ["rating_id"];
+            referencedRelation: "ratings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "rating_comments_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      rating_votes: {
+        Row: {
+          created_at: string | null;
+          rating_id: string;
+          user_id: string;
+          value: number;
+        };
+        Insert: {
+          created_at?: string | null;
+          rating_id: string;
+          user_id: string;
+          value: number;
+        };
+        Update: {
+          created_at?: string | null;
+          rating_id?: string;
+          user_id?: string;
+          value?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rating_votes_rating_id_fkey";
+            columns: ["rating_id"];
+            referencedRelation: "ratings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "rating_votes_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       rating_likes: {
         Row: {
           created_at: string | null;

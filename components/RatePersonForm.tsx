@@ -117,8 +117,9 @@ export function RatePersonForm({
       stars: data.stars,
       text: data.text,
       createdAt: data.created_at,
-      likeCount: 0,
-      likedByCurrentUser: false
+      voteScore: 0,
+      currentUserVote: 0,
+      commentCount: 0
     };
 
     onSuccess?.(savedRating);
