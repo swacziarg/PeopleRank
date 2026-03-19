@@ -298,6 +298,20 @@ export function SearchPeople({
         )}
       </div>
 
+      <div className="rounded-2xl border border-line bg-panel px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold tracking-tight text-white">
+            Leaderboard
+          </h2>
+          <span className="rounded-full border border-line bg-zinc-950 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-zinc-300">
+            Live rankings
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-zinc-400">
+          Community scores update as new ratings come in.
+        </p>
+      </div>
+
       <div className="rounded-3xl border border-line bg-panel p-3">
         {loading && results.length === 0 ? (
           <div className="grid gap-3 p-2">
