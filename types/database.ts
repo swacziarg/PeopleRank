@@ -147,6 +147,7 @@ export type Database = {
     Functions: {
       get_ranked_people_page: {
         Args: {
+          created_by_filter?: string | null;
           page_number?: number;
           page_size?: number;
           search_term?: string | null;
@@ -156,6 +157,7 @@ export type Database = {
           average_stars: number;
           comment_count: number;
           created_at: string;
+          created_by: string;
           engagement_score: number;
           id: string;
           image_url: string | null;

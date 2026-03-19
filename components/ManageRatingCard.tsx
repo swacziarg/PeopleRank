@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmModal } from "@/components/Modal";
 import { RatingLikeButton } from "@/components/RatingLikeButton";
 import { RatingCard } from "@/components/RatingCard";
 import { RatePersonForm } from "@/components/RatePersonForm";
@@ -25,6 +26,7 @@ export function ManageRatingCard({
   const [currentRating, setCurrentRating] = useState(rating);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const [error, setError] = useState("");
   const isOwner = currentUserId === currentRating.userId;
@@ -34,10 +36,11 @@ export function ManageRatingCard({
   }
 
   const handleDelete = async () => {
-    if (!isOwner || isDeleting || !window.confirm("Delete this rating?")) {
+    if (!isOwner || isDeleting) {
       return;
     }
 
+    setIsConfirmOpen(false);
     setError("");
     setIsDeleting(true);
 
@@ -121,12 +124,24 @@ export function ManageRatingCard({
             </button>
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => setIsConfirmOpen(true)}
               disabled={isDeleting}
               className="rounded-full border border-line bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </button>
+            <ConfirmModal
+              open={isConfirmOpen}
+              title="Delete this rating?"
+              description="This removes your rating from the page."
+              confirmLabel="Delete"
+              destructive
+              busy={isDeleting}
+              onConfirm={() => {
+                void handleDelete();
+              }}
+              onClose={() => setIsConfirmOpen(false)}
+            />
             {error ? <p className="text-sm text-rose-300">{error}</p> : null}
           </div>
         ) : null

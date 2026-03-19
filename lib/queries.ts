@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { getDisplayNameFallback } from "@/lib/authProfile";
 import {
   fetchRankedPeoplePage,
   type RankedPeoplePageResult,
@@ -107,16 +108,20 @@ function toFeedRating(
     likeCountByRatingId: Map<string, number>;
   }
 ): FeedRating {
+  const authorName = getDisplayNameFallback(
+    {
+      email: undefined,
+      user_metadata: {}
+    },
+    item.profiles
+  );
+
   return {
     id: item.id,
     userId: item.user_id,
-    authorName:
-      item.profiles?.display_name?.trim() ||
-      item.profiles?.username?.trim() ||
-      "Unknown user",
+    authorName,
     authorAvatarUrl: item.profiles?.avatar_url ?? null,
-    authorAvatarLabel:
-      item.profiles?.display_name?.trim() || item.profiles?.username?.trim() || null,
+    authorAvatarLabel: authorName,
     stars: item.stars,
     text: item.text ?? "",
     createdAt: item.created_at,
@@ -245,18 +250,21 @@ export async function getRankedPeoplePage({
   page = 1,
   pageSize = 8,
   search,
-  sort = "most-rated"
+  sort = "most-rated",
+  createdBy
 }: {
   page?: number;
   pageSize?: number;
   search?: string;
   sort?: RankedPeopleSort;
+  createdBy?: string;
 } = {}): Promise<RankedPeoplePageResult> {
   const supabase = await createSupabaseServerClient();
   return fetchRankedPeoplePage(supabase, {
     page,
     pageSize,
     search,
-    sort
+    sort,
+    createdBy
   });
 }

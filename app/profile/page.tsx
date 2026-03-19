@@ -1,6 +1,8 @@
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { Avatar } from "@/components/Avatar";
+import { BackButton } from "@/components/BackButton";
 import { getRatingsByUser } from "@/lib/queries";
+import { getDisplayNameFallback } from "@/lib/authProfile";
 import { formatDate, resolveAvatarLabel } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { ManageRatingCard } from "@/components/ManageRatingCard";
@@ -52,11 +54,7 @@ export default async function ProfilePage() {
         ? user.user_metadata.picture
         : null;
   const displayName =
-    profile?.display_name?.trim() ||
-    profile?.username ||
-    user.user_metadata?.username ||
-    user.email ||
-    "No name set";
+    getDisplayNameFallback(user, profile);
   const avatarLabel = resolveAvatarLabel(
     profile?.display_name,
     profile?.username,
@@ -73,6 +71,8 @@ export default async function ProfilePage() {
 
   return (
     <section className="space-y-6 py-10">
+      <BackButton fallbackHref="/" />
+
       <div className="space-y-2">
         <p className="text-sm uppercase tracking-[0.3em] text-accent">Profile</p>
         <h1 className="text-3xl font-semibold text-white">Your account</h1>

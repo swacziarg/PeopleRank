@@ -30,6 +30,7 @@ function toRankedPerson(row: RankedPeopleRow): RankedPerson {
     id: row.id,
     name: row.name,
     createdAt: row.created_at,
+    createdBy: row.created_by,
     avatarUrl: row.image_url,
     description: null,
     ratingCount: Number(row.rating_count) || 0,
@@ -59,6 +60,7 @@ function toRankedPersonFromPeopleRow(row: PersonWithRatingsRow): RankedPerson {
     id: row.id,
     name: row.name,
     createdAt: row.created_at,
+    createdBy: row.created_by,
     avatarUrl: row.image_url,
     description: row.description,
     ratingCount,
@@ -131,21 +133,31 @@ async function fetchPeopleWithRatings(
   {
     query,
     exact,
-    limit
+    limit,
+    createdBy
   }: {
     query: string;
     exact: boolean;
     limit: number;
+    createdBy?: string;
   }
 ) {
   const baseQuery = client
     .from("people")
-    .select("id, name, created_at, description, image_url, normalized_name, ratings(stars, text)")
+    .select(
+      "id, name, created_at, created_by, description, image_url, normalized_name, ratings(stars, text)"
+    )
     .limit(limit);
 
-  const { data, error } = exact
-    ? await baseQuery.eq("normalized_name", normalizePersonName(query))
-    : await baseQuery.ilike("name", `%${cleanPersonName(query)}%`);
+  let queryBuilder = exact
+    ? baseQuery.eq("normalized_name", normalizePersonName(query))
+    : baseQuery.ilike("name", `%${cleanPersonName(query)}%`);
+
+  if (createdBy) {
+    queryBuilder = queryBuilder.eq("created_by", createdBy);
+  }
+
+  const { data, error } = await queryBuilder;
 
   if (error || !data) {
     return [];
@@ -160,12 +172,14 @@ export async function fetchRankedPeoplePage(
     page = 1,
     pageSize = 8,
     search,
-    sort = "most-rated"
+    sort = "most-rated",
+    createdBy
   }: {
     page?: number;
     pageSize?: number;
     search?: string;
     sort?: RankedPeopleSort;
+    createdBy?: string;
   } = {}
 ): Promise<RankedPeoplePageResult> {
   const safePage = Math.max(1, page);
@@ -173,6 +187,7 @@ export async function fetchRankedPeoplePage(
   const normalizedSearch = search?.trim() ? search.trim() : null;
 
   const { data, error } = await client.rpc("get_ranked_people_page", {
+    created_by_filter: createdBy ?? null,
     page_number: safePage,
     page_size: safePageSize,
     search_term: normalizedSearch,
@@ -197,17 +212,20 @@ export async function fetchSearchPeople(
   {
     pageSize = 8,
     query,
-    sort = "most-rated"
+    sort = "most-rated",
+    createdBy
   }: {
     pageSize?: number;
     query: string;
     sort?: RankedPeopleSort;
+    createdBy?: string;
   }
 ): Promise<RankedPeopleSearchResult> {
   const exactPeople = await fetchPeopleWithRatings(client, {
     query,
     exact: true,
-    limit: pageSize
+    limit: pageSize,
+    createdBy
   });
 
   if (exactPeople.length > 0) {
@@ -222,7 +240,8 @@ export async function fetchSearchPeople(
   const similarPeople = await fetchPeopleWithRatings(client, {
     query,
     exact: false,
-    limit: pageSize
+    limit: pageSize,
+    createdBy
   });
 
   return {

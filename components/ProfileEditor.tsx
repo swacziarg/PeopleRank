@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
+import { AlertModal, ConfirmModal } from "@/components/Modal";
 import { formatDate } from "@/lib/utils";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 
@@ -35,6 +36,8 @@ export function ProfileEditor({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeletingProfile, setIsDeletingProfile] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const resolvedName = displayName.trim() || initialUsername || email || "User";
@@ -110,12 +113,7 @@ export function ProfileEditor({
   const handleDeleteProfile = async () => {
     setIsMenuOpen(false);
 
-    if (
-      isDeletingProfile ||
-      !window.confirm(
-        "Delete your profile? This removes your profile row and signs you out."
-      )
-    ) {
+    if (isDeletingProfile) {
       return;
     }
 
@@ -127,6 +125,7 @@ export function ProfileEditor({
     setError("");
     setSuccess("");
     setIsDeletingProfile(true);
+    setIsDeleteConfirmOpen(false);
 
     const supabase = getSupabaseBrowserClient();
     const { error: deleteError } = await supabase.from("profiles").delete().eq("id", userId);
@@ -138,9 +137,8 @@ export function ProfileEditor({
     }
 
     await supabase.auth.signOut();
-    window.alert("Profile deleted. Contact support to fully remove account.");
-    router.replace("/login");
-    router.refresh();
+    setIsDeletingProfile(false);
+    setIsDeleteAlertOpen(true);
   };
 
   const handleSignOut = async () => {
@@ -193,7 +191,7 @@ export function ProfileEditor({
             <button
               type="button"
               role="menuitem"
-              onClick={handleDeleteProfile}
+              onClick={() => setIsDeleteConfirmOpen(true)}
               disabled={isDeletingProfile}
               className="w-full rounded-xl px-3 py-2 text-left text-sm text-white transition-colors hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -212,6 +210,30 @@ export function ProfileEditor({
           </div>
         ) : null}
       </div>
+
+      <ConfirmModal
+        open={isDeleteConfirmOpen}
+        title="Delete your profile?"
+        description="This removes your profile row and signs you out."
+        confirmLabel="Delete profile"
+        destructive
+        busy={isDeletingProfile}
+        onConfirm={() => {
+          void handleDeleteProfile();
+        }}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+      />
+
+      <AlertModal
+        open={isDeleteAlertOpen}
+        title="Profile deleted"
+        description="Contact support to fully remove the account."
+        onClose={() => {
+          setIsDeleteAlertOpen(false);
+          router.replace("/login");
+          router.refresh();
+        }}
+      />
 
       {isEditing ? (
         <div className="mt-4 w-full rounded-3xl border border-line bg-panel p-6 sm:min-w-[32rem]">

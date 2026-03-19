@@ -27,20 +27,24 @@ PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious pe
 ## Current UX
 
 - Fixed top navbar with one shared desktop/mobile navigation.
+- Secondary pages (`/add`, `/profile`, `/person/[id]`, `/rate/[id]`) include a lightweight back button.
 - Navbar links: `Home`, `Search`, `Add`, `About`, plus `Profile` when signed in or `Login` when signed out.
 - Profile actions live under the 3-dot menu.
 - Search pagination shows exactly 8 people per page.
 - Search pagination is backend-limited. The app does not fetch the full people list and paginate in the client.
 - Search first looks for exact person-name matches and falls back to similar matches when nothing exact is found.
+- Search includes an `Added by you` toggle that keeps the same sort and pagination flow.
 - Add flow surfaces up to 5 possible matches while typing.
 - Exact duplicates are blocked by normalized-name matching.
 - After a successful add, the app redirects to the created person page.
+- Destructive actions use shared custom modals instead of native `confirm()` / `alert()`.
 - Person pages support `description` and `image_url`.
 - People can be edited or deleted only by the user who created them.
 - Avatar rendering always falls back field-by-field: image first, then initials from display name or username, then `?`.
 - Ratings support:
   - stars only
   - stars plus comment
+- Ratings only require authentication. Missing `username`, `bio`, `avatar_url`, or `display_name` do not block posting.
 - Blank comments are hidden in the UI. Ratings with no comment show stars and metadata only.
 - On the profile page, the user’s own ratings do not repeat the author block.
 - Ratings can be edited or deleted only by their author.
@@ -55,7 +59,8 @@ PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious pe
 - Middleware protects `/add`, `/profile`, and `/rate/[id]`.
 - Unauthenticated access to protected routes redirects to `/login?next=...`.
 - Visiting `/login` while authenticated redirects to `/profile`.
-- Sign up creates a Supabase auth user and attempts to upsert a `profiles` row immediately.
+- Sign up creates a Supabase auth user, ensures a fallback `profiles` row, and redirects into protected flows immediately.
+- Protected write flows also auto-create a fallback `profiles` row if a signed-in user is missing one.
 - If email confirmation is enabled in Supabase, a new user may need to confirm email before logging in.
 
 ## Profile Fields
@@ -67,7 +72,7 @@ The profile UI currently supports:
 - `bio`
 - `avatar_url`
 
-`username` is created at sign up and used as a fallback display value if `display_name` is empty.
+`username` is created at sign up and used as a fallback display value if `display_name` is empty. Rating author names fall back in this order: `display_name`, `username`, email when available, then `Anonymous`.
 
 People now also support:
 
@@ -220,19 +225,21 @@ create table if not exists public.rating_likes (
 
 ## Ranked Pagination Function
 
-`/search` depends on this SQL function so every page returns only the requested 8 records from the backend. Supported sort values are `most-rated`, `most-commented`, `highest-rated`, `lowest-rated`, and `newest`.
+`/search` depends on this SQL function so every page returns only the requested 8 records from the backend. Supported sort values are `most-rated`, `most-commented`, `highest-rated`, `lowest-rated`, and `newest`. The same function also powers the `Added by you` filter.
 
 ```sql
 create or replace function public.get_ranked_people_page(
   page_number integer default 1,
   page_size integer default 8,
   search_term text default null,
-  sort_by text default 'most-rated'
+  sort_by text default 'most-rated',
+  created_by_filter uuid default null
 )
 returns table (
   id uuid,
   name text,
   created_at timestamptz,
+  created_by uuid,
   image_url text,
   rating_count bigint,
   comment_count bigint,
@@ -250,6 +257,7 @@ as $$
       p.id,
       p.name,
       p.created_at,
+      p.created_by,
       p.image_url,
       count(r.id)::bigint as rating_count,
       count(r.id) filter (
@@ -265,10 +273,15 @@ as $$
       )::bigint as engagement_score
     from public.people p
     left join public.ratings r on r.person_id = p.id
-    where
+    where (
       search_term is null
       or p.name ilike '%' || search_term || '%'
-    group by p.id, p.name, p.created_at, p.image_url
+    )
+    and (
+      created_by_filter is null
+      or p.created_by = created_by_filter
+    )
+    group by p.id, p.name, p.created_at, p.created_by, p.image_url
   ),
   ranked as (
     select
@@ -294,6 +307,7 @@ as $$
     id,
     name,
     created_at,
+    created_by,
     image_url,
     rating_count,
     comment_count,

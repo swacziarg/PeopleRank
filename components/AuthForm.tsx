@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ensureProfileForUser, getAuthenticatedUser } from "@/lib/authProfile";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 type AuthMode = "login" | "signup";
@@ -68,17 +69,21 @@ export function AuthForm({ nextPath }: AuthFormProps) {
     }
 
     if (data.user && data.session) {
-      const profileUsername =
-        username.trim() || email.split("@")[0] || `user-${data.user.id.slice(0, 8)}`;
+      const authenticatedUser = (await getAuthenticatedUser(supabase)) ?? data.user;
+      const { error: profileError } = await ensureProfileForUser(
+        supabase,
+        authenticatedUser,
+        username
+      );
 
-      await supabase.from("profiles").upsert({
-        id: data.user.id,
-        username: profileUsername,
-        bio: ""
-      });
+      if (profileError) {
+        setError(profileError.message);
+        setSubmitting(false);
+        return;
+      }
 
-      router.replace(redirectPath);
       router.refresh();
+      window.location.assign(redirectPath);
       return;
     }
 

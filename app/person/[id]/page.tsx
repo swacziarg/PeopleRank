@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
+import { BackButton } from "@/components/BackButton";
 import { DeletePersonButton } from "@/components/DeletePersonButton";
 import { EditPersonForm } from "@/components/EditPersonForm";
 import { ManageRatingCard } from "@/components/ManageRatingCard";
@@ -46,6 +47,8 @@ export default async function PersonPage({ params }: PersonPageProps) {
 
   return (
     <section className="space-y-8 py-10">
+      <BackButton fallbackHref="/search" />
+
       <div className="rounded-3xl border border-line bg-panel p-8">
         <p className="text-sm uppercase tracking-[0.3em] text-accent">
           Person Page

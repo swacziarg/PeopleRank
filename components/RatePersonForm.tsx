@@ -3,6 +3,11 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StarRatingInput } from "@/components/StarRatingInput";
+import {
+  ensureProfileForUser,
+  getAuthenticatedUser,
+  getDisplayNameFallback
+} from "@/lib/authProfile";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 import type { FeedRating } from "@/types";
 
@@ -48,9 +53,7 @@ export function RatePersonForm({
     }
 
     const supabase = getSupabaseBrowserClient();
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
     if (!user) {
       router.push(`/login?next=/rate/${personId}`);
@@ -58,6 +61,14 @@ export function RatePersonForm({
     }
 
     setSubmitting(true);
+    const { error: profileError } = await ensureProfileForUser(supabase, user);
+
+    if (profileError) {
+      setError(profileError.message);
+      setSubmitting(false);
+      return;
+    }
+
     const trimmedText = text.trim();
     const payload = {
       stars,
@@ -95,18 +106,8 @@ export function RatePersonForm({
       userId: data.user_id,
       personId,
       personName,
-      authorName:
-        user.user_metadata?.display_name ||
-        user.user_metadata?.full_name ||
-        user.user_metadata?.name ||
-        user.email ||
-        "Unknown user",
-      authorAvatarLabel:
-        user.user_metadata?.display_name ||
-        user.user_metadata?.full_name ||
-        user.user_metadata?.name ||
-        user.user_metadata?.username ||
-        null,
+      authorName: getDisplayNameFallback(user),
+      authorAvatarLabel: getDisplayNameFallback(user),
       authorAvatarUrl:
         typeof user.user_metadata?.avatar_url === "string"
           ? user.user_metadata.avatar_url

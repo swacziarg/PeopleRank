@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ensureProfileForUser, getAuthenticatedUser } from "@/lib/authProfile";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 import { cleanPersonName, normalizePersonName } from "@/lib/utils";
 
@@ -94,9 +95,7 @@ export function AddPersonForm({
     }
 
     const supabase = getSupabaseBrowserClient();
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
     if (!user) {
       router.push(`/login?next=${encodeURIComponent(loginNextPath)}`);
@@ -112,6 +111,14 @@ export function AddPersonForm({
     }
 
     setSubmitting(true);
+    const { error: profileError } = await ensureProfileForUser(supabase, user);
+
+    if (profileError) {
+      setError(profileError.message);
+      setSubmitting(false);
+      return;
+    }
+
     const { data: existingPerson, error: duplicateCheckError } = await supabase
       .from("people")
       .select("id, name")

@@ -13,6 +13,7 @@ export type RankedPerson = {
   id: string;
   name: string;
   createdAt: string;
+  createdBy: string;
   avatarUrl: string | null;
   description: string | null;
   ratingCount: number;

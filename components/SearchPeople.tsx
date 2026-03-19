@@ -8,6 +8,7 @@ import {
   fetchSearchPeople,
   type RankedPeopleSort
 } from "@/lib/rankedPeople";
+import { getAuthenticatedUser } from "@/lib/authProfile";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabaseClient";
 import type { RankedPerson } from "@/types";
 
@@ -15,6 +16,8 @@ type SearchPeopleProps = {
   initialPeople: RankedPerson[];
   initialPage: number;
   initialTotalCount: number;
+  initialSort: RankedPeopleSort;
+  initialAddedByUserOnly: boolean;
   pageSize: number;
 };
 
@@ -30,17 +33,21 @@ export function SearchPeople({
   initialPeople,
   initialPage,
   initialTotalCount,
+  initialSort,
+  initialAddedByUserOnly,
   pageSize
 }: SearchPeopleProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [sort, setSort] = useState<RankedPeopleSort>("most-rated");
+  const [sort, setSort] = useState<RankedPeopleSort>(initialSort);
   const [results, setResults] = useState<RankedPerson[]>(initialPeople);
   const [page, setPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [similarPeople, setSimilarPeople] = useState<RankedPerson[]>([]);
   const [hasExactMatches, setHasExactMatches] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [addedByUserOnly, setAddedByUserOnly] = useState(initialAddedByUserOnly);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -48,9 +55,43 @@ export function SearchPeople({
     setResults(initialPeople);
     setPage(initialPage);
     setTotalCount(initialTotalCount);
+    setSort(initialSort);
+    setAddedByUserOnly(initialAddedByUserOnly);
     setSimilarPeople([]);
     setHasExactMatches(true);
-  }, [initialPage, initialPeople, initialTotalCount]);
+  }, [initialAddedByUserOnly, initialPage, initialPeople, initialSort, initialTotalCount]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+    let isMounted = true;
+
+    const loadUser = async () => {
+      const user = await getAuthenticatedUser(supabase);
+
+      if (isMounted) {
+        setCurrentUserId(user?.id ?? null);
+      }
+    };
+
+    void loadUser();
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isMounted) {
+        setCurrentUserId(session?.user?.id ?? null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -68,6 +109,15 @@ export function SearchPeople({
       return;
     }
 
+    if (addedByUserOnly && !currentUserId) {
+      setError("Sign in to filter by people you added.");
+      setResults([]);
+      setTotalCount(0);
+      setSimilarPeople([]);
+      setHasExactMatches(true);
+      return;
+    }
+
     let isActive = true;
 
     const runSearch = async () => {
@@ -77,12 +127,14 @@ export function SearchPeople({
       const supabase = getSupabaseBrowserClient();
       const nextResults = debouncedQuery
         ? await fetchSearchPeople(supabase, {
+            createdBy: addedByUserOnly ? currentUserId ?? undefined : undefined,
             pageSize,
             query: debouncedQuery,
             sort
           })
         : {
             ...(await fetchRankedPeoplePage(supabase, {
+              createdBy: addedByUserOnly ? currentUserId ?? undefined : undefined,
               page,
               pageSize,
               sort
@@ -107,18 +159,24 @@ export function SearchPeople({
     return () => {
       isActive = false;
     };
-  }, [debouncedQuery, page, pageSize, sort]);
+  }, [addedByUserOnly, currentUserId, debouncedQuery, page, pageSize, sort]);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (page > 1) {
       params.set("page", String(page));
     }
+    if (sort !== "most-rated") {
+      params.set("sort", sort);
+    }
+    if (addedByUserOnly) {
+      params.set("scope", "mine");
+    }
 
     router.replace(params.size > 0 ? `/search?${params.toString()}` : "/search", {
       scroll: false
     });
-  }, [page, router]);
+  }, [addedByUserOnly, page, router, sort]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const trimmedQuery = query.trim();
@@ -145,7 +203,7 @@ export function SearchPeople({
             />
           </label>
 
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_auto] lg:min-w-[360px]">
+          <div className="grid gap-3 lg:min-w-[420px]">
             <label htmlFor="search-sort" className="block">
               <span className="mb-2 block text-sm font-medium text-zinc-100">
                 Sort by
@@ -167,14 +225,54 @@ export function SearchPeople({
               </select>
             </label>
 
-            <button
-              type="button"
-              onClick={() => router.push(`/add?name=${encodeURIComponent(trimmedQuery)}`)}
-              disabled={trimmedQuery.length === 0}
-              className="self-end rounded-full border border-line bg-zinc-900 px-5 py-3 text-sm font-medium text-white transition-colors hover:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Add{trimmedQuery ? ` "${trimmedQuery}"` : ""}
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex rounded-full border border-line bg-zinc-950 p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddedByUserOnly(false);
+                    setPage(1);
+                  }}
+                  className={`rounded-full px-4 py-2 text-sm transition-colors ${
+                    !addedByUserOnly
+                      ? "bg-accent text-ink"
+                      : "text-zinc-300 hover:text-white"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!currentUserId) {
+                      router.push(
+                        `/login?next=${encodeURIComponent("/search?scope=mine")}`
+                      );
+                      return;
+                    }
+
+                    setAddedByUserOnly(true);
+                    setPage(1);
+                  }}
+                  className={`rounded-full px-4 py-2 text-sm transition-colors ${
+                    addedByUserOnly
+                      ? "bg-accent text-ink"
+                      : "text-zinc-300 hover:text-white"
+                  }`}
+                >
+                  Added by you
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => router.push(`/add?name=${encodeURIComponent(trimmedQuery)}`)}
+                disabled={trimmedQuery.length === 0}
+                className="self-end rounded-full border border-line bg-zinc-900 px-5 py-3 text-sm font-medium text-white transition-colors hover:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Add{trimmedQuery ? ` "${trimmedQuery}"` : ""}
+              </button>
+            </div>
           </div>
         </div>
 

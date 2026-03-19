@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { BackButton } from "@/components/BackButton";
 import { RatePersonForm } from "@/components/RatePersonForm";
 import { getPersonById } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
@@ -29,6 +30,8 @@ export default async function RatePage({ params }: RatePageProps) {
 
   return (
     <section className="space-y-6 py-10">
+      <BackButton fallbackHref={`/person/${person.id}`} />
+
       <div className="space-y-2">
         <p className="text-sm uppercase tracking-[0.3em] text-accent">Rate</p>
         <h1 className="text-3xl font-semibold text-white">
