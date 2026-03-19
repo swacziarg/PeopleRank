@@ -91,6 +91,7 @@ export function ManageRatingCard({
 
   return (
     <RatingCard
+      ratingId={currentRating.id}
       personId={currentRating.personId}
       personName={currentRating.personName}
       authorName={currentRating.authorName}

@@ -52,6 +52,7 @@ PeopleRank is a Next.js 14 + Supabase app for public, intentionally unserious pe
 - Search sort options include `Lowest rated`.
 - Ratings with comments can be liked. Star-only ratings never show like controls.
 - Person pages show a lightweight SVG graph when at least two rating history buckets exist.
+- Share buttons support copying or native sharing for person pages and individual rating deep links.
 
 ## Auth Flow
 

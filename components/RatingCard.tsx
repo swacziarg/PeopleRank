@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
+import { ShareButton } from "@/components/ShareButton";
 import { formatDate, renderStars } from "@/lib/utils";
 
 type RatingCardProps = {
+  ratingId?: string;
   personId: string;
   personName: string;
   authorName: string;
@@ -19,6 +21,7 @@ type RatingCardProps = {
 };
 
 export function RatingCard({
+  ratingId,
   personId,
   personName,
   authorName,
@@ -35,7 +38,10 @@ export function RatingCard({
   const comment = text.trim();
 
   return (
-    <article className="rounded-3xl border border-line bg-panel p-5">
+    <article
+      id={ratingId ? `rating-${ratingId}` : undefined}
+      className="scroll-mt-24 rounded-3xl border border-line bg-panel p-5"
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           {showPersonLink ? (
@@ -50,9 +56,19 @@ export function RatingCard({
           )}
           <p className="text-lg text-accent">{renderStars(stars)}</p>
         </div>
-        <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-          {formatDate(createdAt)}
-        </p>
+        <div className="flex flex-col items-end gap-2">
+          <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
+            {formatDate(createdAt)}
+          </p>
+          {ratingId ? (
+            <ShareButton
+              title={`${personName} rating`}
+              path={`/person/${personId}`}
+              hash={`rating-${ratingId}`}
+              compact
+            />
+          ) : null}
+        </div>
       </div>
       {showAuthor ? (
         <div className="mt-4 flex items-center gap-3">

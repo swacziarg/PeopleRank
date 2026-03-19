@@ -71,6 +71,7 @@ export default async function HomePage() {
             {ratings.map((rating) => (
               <RatingCard
                 key={rating.id}
+                ratingId={rating.id}
                 personId={rating.personId}
                 personName={rating.personName}
                 authorName={rating.authorName}

@@ -6,6 +6,7 @@ import { DeletePersonButton } from "@/components/DeletePersonButton";
 import { EditPersonForm } from "@/components/EditPersonForm";
 import { ManageRatingCard } from "@/components/ManageRatingCard";
 import { RatingTrendChart } from "@/components/RatingTrendChart";
+import { ShareButton } from "@/components/ShareButton";
 import { getPersonById, getRatingsForPerson } from "@/lib/queries";
 import { formatAverage } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
@@ -71,6 +72,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
+              <ShareButton title={person.name} path={`/person/${person.id}`} />
               <Link
                 href={`/rate/${person.id}`}
                 className="inline-flex rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-ink hover:bg-amber-300"
